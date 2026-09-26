@@ -71,3 +71,15 @@ class TMDBClient:
         )
 
         return movie, created
+
+    def get_genres(self):
+        response = requests.get(
+            f"{TMDB_BASE_URL}/genre/movie/list",
+            headers=self.headers,
+            params={"language": "en"},
+            timeout=10,
+        )
+
+        response.raise_for_status()
+
+        return response.json()["genres"]

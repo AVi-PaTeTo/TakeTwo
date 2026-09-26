@@ -82,14 +82,18 @@ class PostCommentsView(APIView):
 
     def get(self, request, post_id):
         comments = (
-            Comment.objects
-            .filter(post_id=post_id, parent__isnull=True)
-            .select_related("user")
-            .prefetch_related("replies__user", "replies_replies_to", "replies__likes")
-            .order_by("created_at")
-        )
+                    Comment.objects
+                    .filter(post_id=post_id, parent__isnull=True)
+                    .select_related("user", "reply_to")
+                    .prefetch_related(
+                        "replies__user",
+                        "replies__reply_to",
+                        "replies__likes",
+                    )
+                    .order_by("created_at")
+                )
 
-        serializer = CommentSerializer(comments, many=True)
+        serializer = CommentSerializer(comments, many=True, context={"request": request},)
 
         return Response(serializer.data)
 

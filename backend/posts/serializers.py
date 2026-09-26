@@ -71,10 +71,14 @@ class CommentSerializer(serializers.ModelSerializer):
     user = UserSummarySerializer(read_only=True)
     reply_to = UserSummarySerializer(read_only=True)
 
+    replies = serializers.SerializerMethodField()
+
     like_count = serializers.IntegerField(
         source="likes.count",
         read_only=True
     )
+
+    is_liked = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
@@ -82,8 +86,10 @@ class CommentSerializer(serializers.ModelSerializer):
             "id",
             "user",
             "reply_to",
+            "replies",
             "content",
             "like_count",
+            "is_liked",
             "created_at",
             "updated_at",
         ]
@@ -91,7 +97,23 @@ class CommentSerializer(serializers.ModelSerializer):
             "id",
             "user",
             "reply_to",
+            "replies",
             "like_count",
             "created_at",
             "updated_at",
         ]
+
+    def get_replies(self, obj):
+        return CommentSerializer(
+            obj.replies.all(),
+            many=True,
+            context=self.context,
+        ).data
+
+    def get_is_liked(self, obj):
+        request = self.context.get("request")
+        
+        if not request or not request.user.is_authenticated:
+            return False
+
+        return obj.likes.filter(user=request.user).exists()

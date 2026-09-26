@@ -1,0 +1,56 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../core/network/providers.dart';
+import '../models/post.dart';
+import '../services/home_service.dart';
+
+final homeServiceProvider = Provider<HomeService>((ref) {
+  return HomeService(apiClient: ref.read(apiClientProvider));
+});
+
+final homePostsProvider = AsyncNotifierProvider<HomePostsNotifier, List<Post>>(
+  HomePostsNotifier.new,
+);
+
+class HomePostsNotifier extends AsyncNotifier<List<Post>> {
+  @override
+  Future<List<Post>> build() async {
+    return ref.read(homeServiceProvider).getPosts();
+  }
+
+  Future<void> toggleLike(Post post) async {
+    final service = ref.read(homeServiceProvider);
+
+    // Update UI immediately.
+    final newLikedState = !post.isLiked;
+    final newLikeCount = post.likeCount + (newLikedState ? 1 : -1);
+
+    state = AsyncData([
+      for (final currentPost in state.value ?? [])
+        if (currentPost.id == post.id)
+          currentPost.copyWith(isLiked: newLikedState, likeCount: newLikeCount)
+        else
+          currentPost,
+    ]);
+
+    try {
+      if (newLikedState) {
+        await service.likePost(post.id);
+      } else {
+        await service.unlikePost(post.id);
+      }
+    } catch (e) {
+      // Revert if the API request failed.
+      state = AsyncData([
+        for (final currentPost in state.value ?? [])
+          if (currentPost.id == post.id)
+            currentPost.copyWith(
+              isLiked: post.isLiked,
+              likeCount: post.likeCount,
+            )
+          else
+            currentPost,
+      ]);
+    }
+  }
+}
