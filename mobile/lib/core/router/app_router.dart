@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobile/features/explore/screens/explore_screen.dart';
 
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/screens/login_screen.dart';
@@ -92,8 +93,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/explore',
-                builder: (context, state) =>
-                    const PlaceholderScreen(title: 'Explore'),
+                builder: (context, state) => const ExploreScreen(),
               ),
             ],
           ),

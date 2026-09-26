@@ -15,7 +15,8 @@ class AuthService {
   }) async {
     final response = await apiClient.dio.post(
       'auth/login/',
-      data: {'username': username, 'password': password},
+      // data: {'username': username, 'password': password},
+      data: {'username': 'Abhi', 'password': 'password123'},
     );
 
     await storage.saveAccessToken(response.data['access']);

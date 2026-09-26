@@ -8,6 +8,7 @@ class Movie {
   final String backdropPath;
   final List<int> genreIds;
   final String trailerUrl;
+  final String? releaseDate;
 
   const Movie({
     required this.id,
@@ -19,6 +20,7 @@ class Movie {
     required this.backdropPath,
     required this.genreIds,
     required this.trailerUrl,
+    required this.releaseDate,
   });
 
   factory Movie.fromJson(Map<String, dynamic> json) {
@@ -32,6 +34,7 @@ class Movie {
       backdropPath: json['backdrop_path'] ?? '',
       genreIds: List<int>.from(json['genre_ids'] ?? []),
       trailerUrl: json['trailer_url'] ?? '',
+      releaseDate: json['release_date'],
     );
   }
 }
