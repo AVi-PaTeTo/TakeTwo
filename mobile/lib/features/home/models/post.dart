@@ -1,3 +1,5 @@
+import 'package:mobile/shared/models/post_detail_data.dart';
+
 import 'movie.dart';
 import 'user_summary.dart';
 
@@ -49,6 +51,22 @@ class Post {
       likeCount: likeCount ?? this.likeCount,
       commentCount: commentCount,
       isLiked: isLiked ?? this.isLiked,
+    );
+  }
+
+  PostDetailData toPostDetailData() {
+    return PostDetailData(
+      id: id,
+      userId: user.id,
+      username: user.username,
+      title: title,
+      content: content,
+      movieTitle: movie.title,
+      posterPath: movie.posterPath,
+      customPosterUrl: customPosterUrl,
+      likeCount: likeCount,
+      commentCount: commentCount,
+      isLiked: isLiked,
     );
   }
 }

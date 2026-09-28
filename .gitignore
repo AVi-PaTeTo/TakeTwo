@@ -1,21 +1,33 @@
 # Python
 __pycache__/
 *.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
 .venv/
-.env
+env/
+.env/
+ENV/
 
 # Django
+*.log
 db.sqlite3
+media/
 staticfiles/
 
-# Flutter
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-.packages
-build/
+# Environment variables
+.env
 
-# IDE
+# Flutter
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.packages
+mobile/build/
+mobile/.idea/
+
+# VS Code
 .vscode/
 .idea/
 

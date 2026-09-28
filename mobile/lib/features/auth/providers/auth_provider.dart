@@ -50,6 +50,11 @@ class AuthNotifier extends AsyncNotifier<User?> {
 
   Future<void> logout() async {
     await ref.read(authServiceProvider).logout();
+
     state = const AsyncData(null);
+  }
+
+  bool isCurrentUser(int userId) {
+    return state.value?.id == userId;
   }
 }

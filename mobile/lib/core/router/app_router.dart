@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/features/explore/screens/explore_screen.dart';
+import 'package:mobile/features/search/screens/search_screen.dart';
+import 'package:mobile/shared/models/post_detail_data.dart';
 
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
 import '../../features/home/screens/home_screen.dart';
+import '../../shared/screens/post_detail_screen.dart';
+import '../../shared/screens/user_detail_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
@@ -42,6 +46,22 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: '/posts/:id',
+        builder: (context, state) {
+          final post = state.extra as PostDetailData;
+
+          return PostDetailScreen(post: post);
+        },
+      ),
+      GoRoute(
+        path: '/users/:id',
+        builder: (context, state) {
+          final userId = int.parse(state.pathParameters['id']!);
+
+          return UserDetailScreen(userId: userId);
+        },
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
@@ -110,8 +130,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/search',
-                builder: (context, state) =>
-                    const PlaceholderScreen(title: 'Search'),
+                builder: (context, state) => const SearchScreen(),
               ),
             ],
           ),
@@ -119,8 +138,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/profile',
-                builder: (context, state) =>
-                    const PlaceholderScreen(title: 'Profile'),
+                builder: (context, state) {
+                  final currentUser = ref.read(authProvider).value;
+
+                  return UserDetailScreen(userId: currentUser!.id);
+                },
               ),
             ],
           ),

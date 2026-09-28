@@ -42,10 +42,36 @@ class TMDBClient:
     def normalise_details(self, data, media_type):
         if media_type == "movie":
             title = data.get("title", "")
-            release_date = data.get("release_data") or None
+            release_date = data.get("release_date") or None
         else:
             title = data.get("name", "")
             release_date = data.get("first_air_date") or None
+
+        videos = data.get("videos", {}).get("results", [])
+
+        trailer_url = ""
+        trailers = [
+                    video
+                    for video in videos
+                    if video.get("site") == "YouTube"
+                    and video.get("type") == "Trailer"
+                    ]
+        if trailers:
+            official_trailers = [
+                video
+                for video in trailers
+                if video.get("official") is True
+            ]
+
+            trailer = (
+                official_trailers[0]
+                if official_trailers
+                else trailers[0]
+            )
+
+            trailer_url = (
+                f"https://www.youtube.com/watch?v={trailer['key']}"
+            )
 
         return{
             "tmdb_id": data["id"],
@@ -59,6 +85,7 @@ class TMDBClient:
                 genre["id"]
                 for genre in data.get("genres", [])
             ],
+            "trailer_url": trailer_url,
         }
 
     def save_movie(self, data, media_type):

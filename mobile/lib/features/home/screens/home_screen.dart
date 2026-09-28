@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mobile/shared/widgets/post_card.dart';
 
 import '../providers/home_provider.dart';
 import '../widgets/comments_bottom_sheet.dart';
@@ -33,81 +35,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             itemBuilder: (context, index) {
               final post = posts[index];
 
-              return Card(
-                margin: const EdgeInsets.only(bottom: 16),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '@${post.user.username}',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-
-                      const SizedBox(height: 8),
-
-                      Text(
-                        post.title,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-
-                      const SizedBox(height: 4),
-
-                      Text(
-                        post.movie.title,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      Text(post.content),
-
-                      const SizedBox(height: 16),
-
-                      Row(
-                        children: [
-                          IconButton(
-                            onPressed: () {
-                              ref
-                                  .read(homePostsProvider.notifier)
-                                  .toggleLike(post);
-                            },
-                            icon: Icon(
-                              post.isLiked
-                                  ? Icons.favorite
-                                  : Icons.favorite_border,
-                            ),
-                          ),
-
-                          Text('${post.likeCount}'),
-
-                          const SizedBox(width: 12),
-
-                          IconButton(
-                            onPressed: () {
-                              showModalBottomSheet(
-                                context: context,
-                                isScrollControlled: true,
-                                builder: (_) {
-                                  return CommentsBottomSheet(postId: post.id);
-                                },
-                              );
-                            },
-                            icon: const Icon(Icons.comment_outlined),
-                          ),
-
-                          Text('${post.commentCount}'),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+              return PostCard(
+                post: post,
+                onTap: () {
+                  context.push(
+                    '/posts/${post.id}',
+                    extra: post.toPostDetailData(),
+                  );
+                },
+                onLikePressed: () {
+                  ref.read(homePostsProvider.notifier).toggleLike(post);
+                },
+                onCommentPressed: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    builder: (_) {
+                      return CommentsBottomSheet(postId: post.id);
+                    },
+                  );
+                },
               );
             },
           );
