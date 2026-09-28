@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobile/features/create/screens/create_screen.dart';
 import 'package:mobile/features/explore/screens/explore_screen.dart';
 import 'package:mobile/features/search/screens/search_screen.dart';
 import 'package:mobile/shared/models/post_detail_data.dart';
@@ -121,8 +122,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/create',
-                builder: (context, state) =>
-                    const PlaceholderScreen(title: 'Create'),
+                builder: (context, state) => const CreateScreen(),
               ),
             ],
           ),

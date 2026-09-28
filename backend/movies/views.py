@@ -13,14 +13,16 @@ class MovieSearchView(APIView):
 
     def get(self, request):
         query = request.query_params.get("query", "").strip()
+        search_type = request.query_params.get("type", "movie").strip()
 
         if not query:
             return Response(
                 {"error": "Query parameter is required."},
                 status=400
             )
+            
         client = TMDBClient()
-        data = client.search_movies(query)
+        data = client.search_movies(query, search_type=search_type)
 
         return Response(data)
 

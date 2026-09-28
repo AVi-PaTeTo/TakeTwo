@@ -11,9 +11,9 @@ class TMDBClient:
             "accept": "application/json"
         }
 
-    def search_movies(self, query):
+    def search_movies(self, query, search_type):
         response = requests.get(
-            f"{TMDB_BASE_URL}/search/movie",
+            f"{TMDB_BASE_URL}/search/{search_type}",
             headers=self.headers,
             params={"query": query,
                     "include_adult": True,
