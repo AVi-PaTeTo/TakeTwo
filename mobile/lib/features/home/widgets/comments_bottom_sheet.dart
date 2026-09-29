@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/shared/models/comment.dart';
 
-import '../models/comment.dart';
-import '../providers/home_provider.dart';
+// Use the shared post service provider
+import 'package:mobile/shared/providers/post_cache_provider.dart';
 
 class CommentsBottomSheet extends ConsumerStatefulWidget {
   final int postId;
@@ -36,7 +37,8 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
 
   Future<void> _loadComments() async {
     try {
-      final service = ref.read(homeServiceProvider);
+      // Changed to shared postServiceProvider
+      final service = ref.read(postServiceProvider);
       final comments = await service.getComments(widget.postId);
 
       if (!mounted) return;
@@ -234,7 +236,8 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
   }
 
   Future<void> _toggleCommentLike(Comment comment) async {
-    final service = ref.read(homeServiceProvider);
+    // Changed to shared postServiceProvider
+    final service = ref.read(postServiceProvider);
 
     final wasLiked = comment.isLiked;
     final newLikedState = !wasLiked;
@@ -298,7 +301,8 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
 
     if (content.isEmpty) return;
 
-    final service = ref.read(homeServiceProvider);
+    // Changed to shared postServiceProvider
+    final service = ref.read(postServiceProvider);
 
     try {
       if (_replyingTo == null) {

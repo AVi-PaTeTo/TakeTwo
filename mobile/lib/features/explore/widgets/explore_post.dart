@@ -1,21 +1,24 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:mobile/shared/models/post.dart';
+// Import the global post provider for normalized live-syncing
+import 'package:mobile/shared/providers/post_cache_provider.dart';
 
 import '../../../core/config/tmdb_image.dart';
-import '../../home/models/post.dart';
 import '../utils/genre_names.dart';
 
-class ExplorePost extends StatefulWidget {
+class ExplorePost extends ConsumerStatefulWidget {
   final Post post;
 
   const ExplorePost({super.key, required this.post});
 
   @override
-  State<ExplorePost> createState() => _ExplorePostState();
+  ConsumerState<ExplorePost> createState() => _ExplorePostState();
 }
 
-class _ExplorePostState extends State<ExplorePost> {
+class _ExplorePostState extends ConsumerState<ExplorePost> {
   bool _isExpanded = false;
 
   Future<void> _openTrailer() async {
@@ -36,13 +39,22 @@ class _ExplorePostState extends State<ExplorePost> {
 
   @override
   Widget build(BuildContext context) {
-    final post = widget.post;
+    // --- NORMALIZED SYNC ---
+    // Watch the global cache so likes/comments update instantly across the app
+    final post = ref.watch(postProvider(widget.post.id)) ?? widget.post;
 
+    // Handle both custom uploaded posters and standard TMDB movie posters
+    final posterPath = post.customPosterUrl?.isNotEmpty == true
+        ? post.customPosterUrl!
+        : TmdbImage.poster(post.movie.posterPath);
+
+    debugPrint('BUILD IMAGE: $posterPath');
     return Stack(
       fit: StackFit.expand,
       children: [
         CachedNetworkImage(
-          imageUrl: TmdbImage.poster(post.movie.posterPath),
+          key: ValueKey(posterPath),
+          imageUrl: posterPath,
           fit: BoxFit.cover,
           placeholder: (context, url) {
             return const Center(child: CircularProgressIndicator());
@@ -84,7 +96,7 @@ class _ExplorePostState extends State<ExplorePost> {
             child: AnimatedSize(
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeInOut,
-              child: _buildInfo(),
+              child: _buildInfo(post),
             ),
           ),
         ),
@@ -92,8 +104,7 @@ class _ExplorePostState extends State<ExplorePost> {
     );
   }
 
-  Widget _buildInfo() {
-    final post = widget.post;
+  Widget _buildInfo(Post post) {
     final genres = post.movie.genreIds
         .map((id) => genreNames[id])
         .whereType<String>()

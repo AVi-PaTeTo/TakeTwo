@@ -5,6 +5,7 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .pagination import PostPagination
 from .models import Post, PostLike, Comment, CommentLike
 from .serializers import PostSerializer, CommentSerializer
 
@@ -256,6 +257,7 @@ class CommentLikeView(APIView):
 class ExploreView(generics.ListAPIView):
     serializer_class = PostSerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = PostPagination
 
     def get_queryset(self):
         user = self.request.user

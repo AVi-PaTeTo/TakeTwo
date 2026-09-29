@@ -1,9 +1,9 @@
 import 'package:mobile/features/search/models/search_user.dart';
-import 'package:mobile/features/search/models/search_post.dart';
+import 'package:mobile/shared/models/post.dart';
 
 class SearchResponse {
   final List<SearchUser> users;
-  final List<SearchPost> posts;
+  final List<Post> posts;
 
   const SearchResponse({this.users = const [], this.posts = const []});
 
@@ -13,7 +13,7 @@ class SearchResponse {
           .map((user) => SearchUser.fromJson(user as Map<String, dynamic>))
           .toList(),
       posts: (json['posts'] as List<dynamic>? ?? [])
-          .map((post) => SearchPost.fromJson(post as Map<String, dynamic>))
+          .map((post) => Post.fromJson(post as Map<String, dynamic>))
           .toList(),
     );
   }

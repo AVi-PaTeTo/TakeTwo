@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/shared/widgets/post_card.dart';
-// import 'package:mobile/features/home/models/post.dart';
-
 import 'package:flutter/foundation.dart';
+
+// Import normalized providers
+import 'package:mobile/shared/providers/post_cache_provider.dart';
+import 'package:mobile/shared/providers/feed_providers.dart'; // For global actions like toggleLike if needed
 
 import '../providers/user_detail_provider.dart';
 
@@ -53,8 +55,6 @@ class UserDetailScreen extends ConsumerWidget {
         ),
 
         data: (user) {
-          // print(user.id);
-
           return RefreshIndicator(
             onRefresh: () async {
               ref.invalidate(userDetailProvider(userId));
@@ -88,13 +88,26 @@ class UserDetailScreen extends ConsumerWidget {
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate((context, index) {
+                        final rawPost = user.posts[index];
+
+                        // --- NORMALIZED LOOKUP ---
+                        // Watch the central cache using the post ID so updates sync globally
+                        final post =
+                            ref.watch(postProvider(rawPost.id)) ?? rawPost;
+
                         return PostCard(
-                          post: user.posts[index],
+                          post: post,
                           onTap: () {
                             context.push(
-                              '/posts/${user.posts[index].id}',
-                              extra: user.posts[index].toPostDetailData(),
+                              '/posts/${post.id}',
+                              extra: post.toPostDetailData(),
                             );
+                          },
+                          onLikePressed: () {
+                            // Trigger the global post action notifier to sync likes across Home & Profile
+                            ref
+                                .read(homeFeedIdsProvider.notifier)
+                                .toggleLike(post.id);
                           },
                         );
                       }, childCount: user.posts.length),

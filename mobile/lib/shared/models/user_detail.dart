@@ -1,4 +1,4 @@
-import 'package:mobile/features/home/models/post.dart';
+import 'post.dart';
 
 class UserDetail {
   final int id;

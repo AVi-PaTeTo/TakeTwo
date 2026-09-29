@@ -1,0 +1,40 @@
+class Movie {
+  final int id;
+  final int tmdbId;
+  final String mediaType;
+  final String title;
+  final String overview;
+  final String posterPath;
+  final String backdropPath;
+  final List<int> genreIds;
+  final String trailerUrl;
+  final String? releaseDate;
+
+  const Movie({
+    required this.id,
+    required this.tmdbId,
+    required this.mediaType,
+    required this.title,
+    required this.overview,
+    required this.posterPath,
+    required this.backdropPath,
+    required this.genreIds,
+    required this.trailerUrl,
+    this.releaseDate,
+  });
+
+  factory Movie.fromJson(Map<String, dynamic> json) {
+    return Movie(
+      id: json['id'],
+      tmdbId: json['tmdb_id'] ?? 0,
+      mediaType: json['media_type'] ?? 'movie',
+      title: json['title'] ?? '',
+      overview: json['overview'] ?? '',
+      posterPath: json['poster_path'] ?? '',
+      backdropPath: json['backdrop_path'] ?? '',
+      genreIds: List<int>.from(json['genre_ids'] ?? []),
+      trailerUrl: json['trailer_url'] ?? '',
+      releaseDate: json['release_date'],
+    );
+  }
+}

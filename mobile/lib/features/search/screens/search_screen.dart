@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/shared/widgets/post_card.dart';
+// import 'package:mobile/shared/models/post.dart';
 
-import '../../../shared/models/post_detail_data.dart';
+// import 'package:mobile/shared/providers/feed_providers.dart';
+import 'package:mobile/shared/providers/post_cache_provider.dart';
+
+// import '../../../shared/models/post_detail_data.dart';
 import '../providers/search_provider.dart';
-import '../models/search_result.dart';
-import '../models/search_post.dart';
+
+// import '../models/search_result.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
@@ -15,102 +19,102 @@ class SearchScreen extends ConsumerStatefulWidget {
   ConsumerState<SearchScreen> createState() => _SearchScreenState();
 }
 
-class _PostSearchCard extends StatelessWidget {
-  final SearchPost post;
-  final VoidCallback onTap;
+// class _PostSearchCard extends StatelessWidget {
+//   final Post post;
+//   final VoidCallback onTap;
 
-  const _PostSearchCard({required this.post, required this.onTap});
+//   const _PostSearchCard({required this.post, required this.onTap});
 
-  @override
-  Widget build(BuildContext context) {
-    final posterPath = post.customPosterUrl?.isNotEmpty == true
-        ? post.customPosterUrl
-        : post.movie.posterPath != null
-        ? 'https://image.tmdb.org/t/p/w500${post.movie.posterPath}'
-        : null;
+//   @override
+//   Widget build(BuildContext context) {
+//     final posterPath = post.customPosterUrl?.isNotEmpty == true
+//         ? post.customPosterUrl
+//         : post.movie.posterPath != null
+//         ? 'https://image.tmdb.org/t/p/w500${post.movie.posterPath}'
+//         : null;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (posterPath != null)
-              Image.network(
-                posterPath,
-                width: double.infinity,
-                height: 220,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) {
-                  return _posterPlaceholder();
-                },
-              )
-            else
-              _posterPlaceholder(),
+//     return Card(
+//       margin: const EdgeInsets.only(bottom: 16),
+//       clipBehavior: Clip.antiAlias,
+//       child: InkWell(
+//         onTap: onTap,
+//         child: Column(
+//           crossAxisAlignment: CrossAxisAlignment.start,
+//           children: [
+//             if (posterPath != null)
+//               Image.network(
+//                 posterPath,
+//                 width: double.infinity,
+//                 height: 220,
+//                 fit: BoxFit.cover,
+//                 errorBuilder: (_, __, ___) {
+//                   return _posterPlaceholder();
+//                 },
+//               )
+//             else
+//               _posterPlaceholder(),
 
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    post.title,
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+//             Padding(
+//               padding: const EdgeInsets.all(12),
+//               child: Column(
+//                 crossAxisAlignment: CrossAxisAlignment.start,
+//                 children: [
+//                   Text(
+//                     post.title,
+//                     style: const TextStyle(
+//                       fontSize: 17,
+//                       fontWeight: FontWeight.bold,
+//                     ),
+//                   ),
 
-                  const SizedBox(height: 4),
+//                   const SizedBox(height: 4),
 
-                  Text(
-                    '${post.movie.title} • @${post.user.username}',
-                    style: TextStyle(color: Colors.grey.shade600),
-                  ),
+//                   Text(
+//                     '${post.movie.title} • @${post.user.username}',
+//                     style: TextStyle(color: Colors.grey.shade600),
+//                   ),
 
-                  const SizedBox(height: 8),
+//                   const SizedBox(height: 8),
 
-                  Text(
-                    post.content,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+//                   Text(
+//                     post.content,
+//                     maxLines: 3,
+//                     overflow: TextOverflow.ellipsis,
+//                   ),
 
-                  const SizedBox(height: 10),
+//                   const SizedBox(height: 10),
 
-                  Row(
-                    children: [
-                      const Icon(Icons.favorite_border, size: 18),
-                      const SizedBox(width: 4),
-                      Text('${post.likeCount}'),
+//                   Row(
+//                     children: [
+//                       const Icon(Icons.favorite_border, size: 18),
+//                       const SizedBox(width: 4),
+//                       Text('${post.likeCount}'),
 
-                      const SizedBox(width: 16),
+//                       const SizedBox(width: 16),
 
-                      const Icon(Icons.comment_outlined, size: 18),
-                      const SizedBox(width: 4),
-                      Text('${post.commentCount}'),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+//                       const Icon(Icons.comment_outlined, size: 18),
+//                       const SizedBox(width: 4),
+//                       Text('${post.commentCount}'),
+//                     ],
+//                   ),
+//                 ],
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
 
-  Widget _posterPlaceholder() {
-    return Container(
-      width: double.infinity,
-      height: 220,
-      color: Colors.grey.shade300,
-      child: const Center(child: Icon(Icons.movie_outlined, size: 48)),
-    );
-  }
-}
+//   Widget _posterPlaceholder() {
+//     return Container(
+//       width: double.infinity,
+//       height: 220,
+//       color: Colors.grey.shade300,
+//       child: const Center(child: Icon(Icons.movie_outlined, size: 48)),
+//     );
+//   }
+// }
 
 class _SearchScreenState extends ConsumerState<SearchScreen> {
   final TextEditingController _controller = TextEditingController();
@@ -235,8 +239,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           ),
           const SizedBox(height: 12),
 
-          ...posts.map(
-            (post) => PostCard(
+          ...posts.map((rawPost) {
+            // --- NORMALIZED LOOKUP ---
+            // Watch central cache so search results stay synchronized with home feed likes
+            final post = ref.watch(postProvider(rawPost.id)) ?? rawPost;
+
+            return PostCard(
               post: post,
               onTap: () {
                 context.push(
@@ -244,70 +252,70 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   extra: post.toPostDetailData(),
                 );
               },
-            ),
-          ),
+            );
+          }),
         ],
       ],
     );
   }
 }
 
-class _MovieSearchCard extends StatelessWidget {
-  final MovieSearchResult movie;
-  final VoidCallback onTap;
+// class _MovieSearchCard extends StatelessWidget {
+//   final MovieSearchResult movie;
+//   final VoidCallback onTap;
 
-  const _MovieSearchCard({required this.movie, required this.onTap});
+//   const _MovieSearchCard({required this.movie, required this.onTap});
 
-  @override
-  Widget build(BuildContext context) {
-    final year = (movie.releaseDate != null && movie.releaseDate!.length >= 4)
-        ? movie.releaseDate!.substring(0, 4)
-        : null;
+//   @override
+//   Widget build(BuildContext context) {
+//     final year = (movie.releaseDate != null && movie.releaseDate!.length >= 4)
+//         ? movie.releaseDate!.substring(0, 4)
+//         : null;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: movie.posterPath != null
-                  ? Image.network(
-                      'https://image.tmdb.org/t/p/w500${movie.posterPath}',
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) {
-                        return _placeholder();
-                      },
-                    )
-                  : _placeholder(),
-            ),
-          ),
+//     return GestureDetector(
+//       onTap: onTap,
+//       child: Column(
+//         crossAxisAlignment: CrossAxisAlignment.start,
+//         children: [
+//           Expanded(
+//             child: ClipRRect(
+//               borderRadius: BorderRadius.circular(10),
+//               child: movie.posterPath != null
+//                   ? Image.network(
+//                       'https://image.tmdb.org/t/p/w500${movie.posterPath}',
+//                       width: double.infinity,
+//                       fit: BoxFit.cover,
+//                       errorBuilder: (_, __, ___) {
+//                         return _placeholder();
+//                       },
+//                     )
+//                   : _placeholder(),
+//             ),
+//           ),
 
-          const SizedBox(height: 8),
+//           const SizedBox(height: 8),
 
-          Text(
-            movie.title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
+//           Text(
+//             movie.title,
+//             maxLines: 2,
+//             overflow: TextOverflow.ellipsis,
+//             style: const TextStyle(fontWeight: FontWeight.w600),
+//           ),
 
-          if (year != null)
-            Text(
-              year,
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-            ),
-        ],
-      ),
-    );
-  }
+//           if (year != null)
+//             Text(
+//               year,
+//               style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+//             ),
+//         ],
+//       ),
+//     );
+//   }
 
-  Widget _placeholder() {
-    return Container(
-      color: Colors.grey.shade300,
-      child: const Center(child: Icon(Icons.movie_outlined)),
-    );
-  }
-}
+//   Widget _placeholder() {
+//     return Container(
+//       color: Colors.grey.shade300,
+//       child: const Center(child: Icon(Icons.movie_outlined)),
+//     );
+//   }
+// }

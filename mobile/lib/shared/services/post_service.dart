@@ -1,16 +1,24 @@
 import 'package:mobile/shared/models/post.dart';
 import 'package:mobile/shared/models/comment.dart';
 
-import '../../../core/network/api_client.dart';
+import '../../core/network/api_client.dart';
 
-class HomeService {
+class PostService {
   final ApiClient apiClient;
 
-  HomeService({required this.apiClient});
+  PostService({required this.apiClient});
 
-  Future<List<Post>> getPosts() async {
+  // --- Posts & Feeds ---
+  Future<List<Post>> getHomeFeed() async {
     final response = await apiClient.dio.get('posts/');
+    return (response.data as List).map((json) => Post.fromJson(json)).toList();
+  }
 
+  Future<List<Post>> searchPosts(String query) async {
+    final response = await apiClient.dio.get(
+      'posts/search/',
+      queryParameters: {'q': query},
+    );
     return (response.data as List).map((json) => Post.fromJson(json)).toList();
   }
 
@@ -22,9 +30,9 @@ class HomeService {
     await apiClient.dio.delete('posts/$postId/like/');
   }
 
+  // --- Comments & Replies ---
   Future<List<Comment>> getComments(int postId) async {
     final response = await apiClient.dio.get('posts/$postId/comments/');
-
     return (response.data as List)
         .map((json) => Comment.fromJson(json))
         .toList();

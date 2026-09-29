@@ -1,68 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/shared/models/post.dart';
+import 'package:mobile/shared/providers/post_cache_provider.dart';
 
 import '../providers/explore_provider.dart';
-import '../../home/models/post.dart';
 import 'explore_post.dart';
 
-class ExploreMoviePage extends ConsumerStatefulWidget {
+class ExploreMoviePage extends ConsumerWidget {
   final Post post;
 
   const ExploreMoviePage({super.key, required this.post});
 
   @override
-  ConsumerState<ExploreMoviePage> createState() => _ExploreMoviePageState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final allCachedPosts = ref.watch(postCacheProvider).values.toList();
+    final moviePosts = allCachedPosts
+        .where((p) => p.movie.id == post.movie.id)
+        .toList();
 
-class _ExploreMoviePageState extends ConsumerState<ExploreMoviePage> {
-  List<Post>? _moviePosts;
-  bool _isLoading = true;
-  String? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadMoviePosts();
-  }
-
-  Future<void> _loadMoviePosts() async {
-    try {
-      final posts = await ref
-          .read(explorePostsProvider.notifier)
-          .getMoviePosts(widget.post.movie.id);
-
-      if (!mounted) return;
-
-      setState(() {
-        _moviePosts = posts;
-        _isLoading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (_error != null) {
-      return Center(
-        child: Text(
-          'Failed to load posts:\n$_error',
-          textAlign: TextAlign.center,
-        ),
-      );
-    }
-
-    final posts = _moviePosts ?? [widget.post];
+    // Fallback to at least showing the current post if none others are cached yet
+    final posts = moviePosts.isNotEmpty ? moviePosts : [post];
 
     return PageView.builder(
       scrollDirection: Axis.horizontal,

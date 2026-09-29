@@ -6,6 +6,9 @@ import '../../../core/network/providers.dart';
 import '../models/search_response.dart';
 import '../services/search_service.dart';
 
+// Import the shared post cache provider
+import 'package:mobile/shared/providers/post_cache_provider.dart';
+
 final searchServiceProvider = Provider<SearchService>((ref) {
   return SearchService(ref.read(apiClientProvider));
 });
@@ -77,6 +80,12 @@ class SearchNotifier extends Notifier<SearchState> {
   Future<void> _performSearch(String query) async {
     try {
       final results = await _service.search(query);
+
+      // --- NORMALIZATION STEP ---
+      // Cache any posts found in search so they link up with global likes/comments
+      if (results.posts.isNotEmpty) {
+        ref.read(postCacheProvider.notifier).cachePosts(results.posts);
+      }
 
       state = state.copyWith(results: results, isLoading: false, error: null);
     } catch (e) {
