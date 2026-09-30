@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+from rest_framework.pagination import PageNumberPagination
 
 from posts.models import Post
 from social.models import Follow
@@ -13,6 +14,9 @@ class RegisterSerializer(serializers.ModelSerializer):
     class Meta: 
         model = User
         fields = [ 'username', 'email', 'password', 'preferred_genres']
+
+    def validate_email(self, value):
+        return value.strip().lower()
 
     def create(self, validated_data):
         return User.objects.create_user(**validated_data)
@@ -29,6 +33,11 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'preferred_genres']
+
+class UserPostPagination(PageNumberPagination):
+    page_size = 15
+    page_size_query_param = 'page_size'
+    max_page_size = 50
 
 class UserDetailSerializer(serializers.ModelSerializer):
     post_count = serializers.IntegerField(read_only=True)
@@ -60,14 +69,15 @@ class UserDetailSerializer(serializers.ModelSerializer):
         return obj.followers.filter(follower=user).exists()
 
     def get_posts(self, obj):
-        posts = (
-            obj.posts
-            .select_related("user", "movie")
-            .all()
-        )
+        request = self.context.get("request")
+        posts = obj.posts.select_related("user", "movie").all()
 
-        return PostSerializer(
-            posts,
+        paginator = UserPostPagination()
+        paginated_posts = paginator.paginate_queryset(posts, request, view=self)
+
+        serializer = PostSerializer(
+            paginated_posts,
             many=True,
             context=self.context,
-        ).data
+        )
+        return paginator.get_paginated_response(serializer.data).data

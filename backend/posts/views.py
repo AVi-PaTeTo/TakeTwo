@@ -20,6 +20,7 @@ class PostCreateView(generics.CreateAPIView):
 
 class PostListView(generics.ListAPIView):
     serializer_class = PostSerializer
+    pagination_class = PostPagination
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):

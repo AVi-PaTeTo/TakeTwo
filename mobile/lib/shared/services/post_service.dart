@@ -9,9 +9,31 @@ class PostService {
   PostService({required this.apiClient});
 
   // --- Posts & Feeds ---
-  Future<List<Post>> getHomeFeed() async {
-    final response = await apiClient.dio.get('posts/');
-    return (response.data as List).map((json) => Post.fromJson(json)).toList();
+  Future<({List<Post> posts, bool hasMore})> getPosts({int page = 1}) async {
+    final response = await apiClient.dio.get(
+      'posts/',
+      queryParameters: {'page': page},
+    );
+
+    final dynamic data = response.data;
+
+    if (data is Map) {
+      final List listData = data['results'] ?? [];
+      final posts = listData.map((json) => Post.fromJson(json)).toList();
+
+      // DRF provides 'next' as a String URL or null when it's the last page
+      final bool hasMore = data['next'] != null;
+
+      return (posts: posts, hasMore: hasMore);
+    }
+
+    // Fallback for unpaginated lists
+    if (data is List) {
+      final posts = data.map((json) => Post.fromJson(json)).toList();
+      return (posts: posts, hasMore: false);
+    }
+
+    return (posts: <Post>[], hasMore: false);
   }
 
   Future<List<Post>> searchPosts(String query) async {

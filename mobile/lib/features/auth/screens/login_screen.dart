@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:fluttertoast/fluttertoast.dart';
+
 import '../providers/auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -29,27 +31,66 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
 
-    await ref
-        .read(authProvider.notifier)
-        .login(
-          username: _usernameController.text.trim(),
-          password: _passwordController.text,
+    // Dismiss keyboard
+    FocusScope.of(context).unfocus();
+
+    try {
+      await ref
+          .read(authProvider.notifier)
+          .login(
+            username: _usernameController.text.trim(),
+            password: _passwordController.text,
+          );
+
+      if (!mounted) return;
+
+      final authState = ref.read(authProvider);
+
+      if (authState.hasError) {
+        // Clean up the error message string (remove raw 'Exception:' prefix)
+        String rawError = authState.error.toString();
+        String cleanError = rawError.startsWith('Exception: ')
+            ? rawError.replaceFirst('Exception: ', '')
+            : rawError;
+
+        // Clean fallback if it's a technical Dio network error
+        if (cleanError.contains('DioException') ||
+            cleanError.contains('connection')) {
+          cleanError = 'Network error. Please check your connection.';
+        }
+
+        Fluttertoast.showToast(
+          msg: cleanError,
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Colors.redAccent, // Red for errors
+          textColor: Colors.white,
+          fontSize: 16.0,
         );
+        return;
+      }
 
-    if (!mounted) {
-      return;
+      // Optional Success Toast (if router doesn't navigate away instantly)
+      Fluttertoast.showToast(
+        msg: "Welcome back!",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.black87, // Or Colors.green
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      Fluttertoast.showToast(
+        msg: "An unexpected error occurred. Please try again.",
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.redAccent,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
     }
-
-    final authState = ref.read(authProvider);
-
-    if (authState.hasError) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(authState.error.toString())));
-
-      return;
-    }
-
-    context.go('/home');
   }
 
   @override

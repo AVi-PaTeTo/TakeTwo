@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/features/search/models/search_post.dart';
 
-import '../models/tmdb_search_result.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+
 import '../providers/create_provider.dart';
 import '../widgets/create_post_form.dart';
 import '../widgets/media_type_toggle.dart';
@@ -53,7 +54,7 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Exit'),
+              child: const Text('Exit', style: TextStyle(color: Colors.red)),
             ),
           ],
         );
@@ -69,7 +70,11 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
     if (!mounted || !canExit) return;
 
     ref.read(createProvider.notifier).reset();
-    Navigator.of(context).pop();
+    if (Navigator.canPop(context)) {
+      Navigator.of(context).pop();
+    } else {
+      context.go('/home');
+    }
   }
 
   Future<void> _createPost() async {
@@ -77,8 +82,14 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
     final content = _contentController.text.trim();
 
     if (title.isEmpty || content.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a title and review.')),
+      Fluttertoast.showToast(
+        msg: "Please enter a title and review.",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM, // BOTTOM, CENTER, or TOP
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.white,
+        textColor: Colors.black87,
+        fontSize: 16.0,
       );
       return;
     }
@@ -94,17 +105,19 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
 
       ref.read(createProvider.notifier).reset();
 
-      context.pushReplacement(
-        '/posts/${post.id}',
-        extra: post.toPostDetailData(),
-      );
+      context.go('/home');
+      context.push('/posts/${post.id}', extra: post.toPostDetailData());
     } catch (_) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Unable to create your post. Please try again.'),
-        ),
+      Fluttertoast.showToast(
+        msg: "Unable to create your post. Please try again.",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM, // BOTTOM, CENTER, or TOP
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.white,
+        textColor: Colors.black87,
+        fontSize: 16.0,
       );
     }
   }

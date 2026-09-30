@@ -8,8 +8,11 @@ class HomeService {
 
   HomeService({required this.apiClient});
 
-  Future<List<Post>> getPosts() async {
-    final response = await apiClient.dio.get('posts/');
+  Future<List<Post>> getPosts({int page = 1}) async {
+    final response = await apiClient.dio.get(
+      'posts/',
+      queryParameters: {'page': page},
+    );
 
     return (response.data as List).map((json) => Post.fromJson(json)).toList();
   }

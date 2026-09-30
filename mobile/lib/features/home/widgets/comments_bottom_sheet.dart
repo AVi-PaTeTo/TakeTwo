@@ -301,7 +301,6 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
 
     if (content.isEmpty) return;
 
-    // Changed to shared postServiceProvider
     final service = ref.read(postServiceProvider);
 
     try {
@@ -313,6 +312,16 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
           content,
           _replyingTo!.user.id,
         );
+      }
+
+      // --- UPDATE THE POST CACHE COMMENT COUNT FOR BOTH ---
+      final currentPost = ref.read(postProvider(widget.postId));
+      if (currentPost != null) {
+        ref
+            .read(postCacheProvider.notifier)
+            .updatePost(
+              currentPost.copyWith(commentCount: currentPost.commentCount + 1),
+            );
       }
 
       _commentController.clear();

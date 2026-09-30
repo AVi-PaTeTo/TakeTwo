@@ -15,21 +15,65 @@ class UserDetailNotifier extends AsyncNotifier<UserDetail> {
   UserDetailNotifier(this.userId);
   late int userId;
 
+  int _currentPage = 1;
+  bool _isFetchingMore = false;
+
   @override
   Future<UserDetail> build() async {
+    return _fetchUserDetail(page: 1);
+  }
+
+  Future<UserDetail> _fetchUserDetail({int page = 1}) async {
+    _currentPage = page;
     final api = ref.read(apiClientProvider);
 
-    final response = await api.dio.get('/auth/users/$userId/');
+    final response = await api.dio.get(
+      '/auth/users/$userId/',
+      queryParameters: {'page': page},
+    );
     final userDetail = UserDetail.fromJson(response.data);
 
-    // --- NORMALIZATION STEP ---
-    // Push any posts belonging to this user into the central cache
-    // so they stay in sync with Home/Search feeds!
     if (userDetail.posts.isNotEmpty) {
       ref.read(postCacheProvider.notifier).cachePosts(userDetail.posts);
     }
 
     return userDetail;
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() => _fetchUserDetail(page: 1));
+  }
+
+  Future<void> loadMore() async {
+    final current = state.value;
+    if (current == null || _isFetchingMore || !current.hasMorePosts) return;
+
+    _isFetchingMore = true;
+    final targetPage = _currentPage + 1;
+
+    try {
+      final api = ref.read(apiClientProvider);
+      final response = await api.dio.get(
+        '/auth/users/$userId/',
+        queryParameters: {'page': targetPage},
+      );
+
+      final nextPageDetail = UserDetail.fromJson(response.data);
+
+      if (nextPageDetail.posts.isNotEmpty) {
+        ref.read(postCacheProvider.notifier).cachePosts(nextPageDetail.posts);
+      }
+      _currentPage = targetPage;
+      state = AsyncData(
+        current.copyWith(
+          posts: [...current.posts, ...nextPageDetail.posts],
+          hasMorePosts: nextPageDetail.hasMorePosts,
+        ),
+      );
+    } finally {
+      _isFetchingMore = false;
+    }
   }
 
   Future<void> toggleFollow() async {

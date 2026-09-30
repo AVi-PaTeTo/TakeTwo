@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:fluttertoast/fluttertoast.dart';
+
 import '../models/genre.dart';
 import '../providers/auth_provider.dart';
 
@@ -56,8 +58,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         _loadingGenres = false;
       });
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Failed to load genres: $e')));
+      Fluttertoast.showToast(
+        msg: "Failed to fetch genre list.",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM, // BOTTOM, CENTER, or TOP
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.white,
+        textColor: Colors.black87,
+        fontSize: 16.0,
+      );
     }
   }
 
@@ -67,11 +76,19 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     }
 
     if (_selectedGenres.length < 5) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Select at least 5 genres.')),
+      Fluttertoast.showToast(
+        msg: "Please select at least 5 genres.",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.redAccent, // Red for validation warnings
+        textColor: Colors.white,
+        fontSize: 16.0,
       );
       return;
     }
+
+    // Dismiss keyboard
+    FocusScope.of(context).unfocus();
 
     setState(() {
       _registering = true;
@@ -89,16 +106,39 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Account created successfully!')),
+      Fluttertoast.showToast(
+        msg: "Account created successfully!",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.black87, // Clean dark background for success
+        textColor: Colors.white,
+        fontSize: 16.0,
       );
 
       context.go('/login');
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Registration failed: $e')));
+      // Clean up error message (strip 'Exception:' prefix if present)
+      String rawError = e.toString();
+      String cleanError = rawError.startsWith('Exception: ')
+          ? rawError.replaceFirst('Exception: ', '')
+          : rawError;
+
+      // Optional: Handle common Dio network or validation errors gracefully
+      if (cleanError.contains('DioException') ||
+          cleanError.contains('connection')) {
+        cleanError = 'Network error. Please check your connection.';
+      }
+
+      Fluttertoast.showToast(
+        msg: cleanError,
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.redAccent, // Red for actual errors
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
     } finally {
       if (mounted) {
         setState(() {

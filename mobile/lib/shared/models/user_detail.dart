@@ -9,6 +9,7 @@ class UserDetail {
   final int followingCount;
   final bool isFollowing;
   final List<Post> posts;
+  final bool hasMorePosts;
 
   UserDetail({
     required this.id,
@@ -19,9 +20,22 @@ class UserDetail {
     required this.followingCount,
     required this.isFollowing,
     required this.posts,
+    required this.hasMorePosts,
   });
 
   factory UserDetail.fromJson(Map<String, dynamic> json) {
+    final postsData = json['posts'];
+    List<Post> parsedPosts = [];
+    bool hasMore = false;
+
+    if (postsData is Map<String, dynamic>) {
+      final results = postsData['results'] as List<dynamic>? ?? [];
+      parsedPosts = results.map((post) => Post.fromJson(post)).toList();
+      hasMore = postsData['next'] != null;
+    } else if (postsData is List<dynamic>) {
+      parsedPosts = postsData.map((post) => Post.fromJson(post)).toList();
+    }
+
     return UserDetail(
       id: json['id'],
       username: json['username'],
@@ -30,13 +44,17 @@ class UserDetail {
       followerCount: json['follower_count'] ?? 0,
       followingCount: json['following_count'] ?? 0,
       isFollowing: json['is_following'] ?? false,
-      posts: (json['posts'] as List<dynamic>? ?? [])
-          .map((post) => Post.fromJson(post))
-          .toList(),
+      posts: parsedPosts,
+      hasMorePosts: hasMore,
     );
   }
 
-  UserDetail copyWith({bool? isFollowing, int? followerCount}) {
+  UserDetail copyWith({
+    bool? isFollowing,
+    int? followerCount,
+    List<Post>? posts,
+    bool? hasMorePosts,
+  }) {
     return UserDetail(
       id: id,
       username: username,
@@ -45,7 +63,8 @@ class UserDetail {
       followerCount: followerCount ?? this.followerCount,
       followingCount: followingCount,
       isFollowing: isFollowing ?? this.isFollowing,
-      posts: posts,
+      posts: posts ?? this.posts,
+      hasMorePosts: hasMorePosts ?? this.hasMorePosts,
     );
   }
 }

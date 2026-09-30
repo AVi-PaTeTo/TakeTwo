@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:mobile/shared/models/post.dart';
-// Import the global post provider for normalized live-syncing
 import 'package:mobile/shared/providers/post_cache_provider.dart';
 
 import '../../../core/config/tmdb_image.dart';
@@ -39,16 +38,14 @@ class _ExplorePostState extends ConsumerState<ExplorePost> {
 
   @override
   Widget build(BuildContext context) {
-    // --- NORMALIZED SYNC ---
-    // Watch the global cache so likes/comments update instantly across the app
+    // Watch the normalized cache so likes/comments/etc.
+    // stay synchronized across the app.
     final post = ref.watch(postProvider(widget.post.id)) ?? widget.post;
 
-    // Handle both custom uploaded posters and standard TMDB movie posters
     final posterPath = post.customPosterUrl?.isNotEmpty == true
         ? post.customPosterUrl!
         : TmdbImage.poster(post.movie.posterPath);
 
-    debugPrint('BUILD IMAGE: $posterPath');
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -56,17 +53,27 @@ class _ExplorePostState extends ConsumerState<ExplorePost> {
           key: ValueKey(posterPath),
           imageUrl: posterPath,
           fit: BoxFit.cover,
+
+          // No spinner.
+          //
+          // If the prefetch has completed, the image should
+          // appear immediately. If it hasn't, we use a
+          // simple black background while it loads.
           placeholder: (context, url) {
-            return const Center(child: CircularProgressIndicator());
+            return const ColoredBox(color: Colors.black);
           },
+
           errorWidget: (context, url, error) {
-            return const Center(
-              child: Icon(Icons.broken_image, color: Colors.white, size: 48),
+            return const ColoredBox(
+              color: Colors.black,
+              child: Center(
+                child: Icon(Icons.broken_image, color: Colors.white, size: 48),
+              ),
             );
           },
         ),
 
-        // Dark overlay.
+        // Dark gradient overlay.
         Positioned.fill(
           child: DecoratedBox(
             decoration: BoxDecoration(
@@ -217,7 +224,9 @@ class _ExplorePostState extends ConsumerState<ExplorePost> {
         Row(
           children: [
             const Icon(Icons.favorite_border, color: Colors.white, size: 22),
+
             const SizedBox(width: 6),
+
             Text(
               '${post.likeCount}',
               style: const TextStyle(color: Colors.white),
@@ -226,7 +235,9 @@ class _ExplorePostState extends ConsumerState<ExplorePost> {
             const SizedBox(width: 20),
 
             const Icon(Icons.comment_outlined, color: Colors.white, size: 22),
+
             const SizedBox(width: 6),
+
             Text(
               '${post.commentCount}',
               style: const TextStyle(color: Colors.white),

@@ -1,4 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/shared/providers/post_cache_provider.dart';
+import 'package:mobile/features/explore/providers/explore_provider.dart';
+import 'package:mobile/shared/providers/feed_providers.dart';
 
 import '../../../core/network/providers.dart';
 import '../../../core/storage/providers.dart';
@@ -46,11 +49,15 @@ class AuthNotifier extends AsyncNotifier<User?> {
           .read(authServiceProvider)
           .login(username: username, password: password),
     );
+
+    await ref.read(homeFeedIdsProvider.notifier).refresh();
+    await ref.read(explorePostsProvider.notifier).refresh();
   }
 
   Future<void> logout() async {
     await ref.read(authServiceProvider).logout();
 
+    ref.read(postCacheProvider.notifier).clear();
     state = const AsyncData(null);
   }
 

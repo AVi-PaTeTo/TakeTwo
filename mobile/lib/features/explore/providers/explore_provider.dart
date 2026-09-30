@@ -14,7 +14,6 @@ final explorePostsProvider =
       ExplorePostsNotifier.new,
     );
 
-// --- NEW: Derived provider to handle mapping and deduplication safely ---
 final exploreMoviePostsProvider = Provider.autoDispose<AsyncValue<List<Post>>>((
   ref,
 ) {
@@ -43,13 +42,24 @@ class ExplorePostsNotifier extends AsyncNotifier<List<int>> {
 
   @override
   Future<List<int>> build() async {
+    return _fetchInitialPage();
+  }
+
+  Future<List<int>> _fetchInitialPage() async {
     _currentPage = 1;
     _hasMore = true;
 
-    final posts = await _service.getPosts(page: _currentPage);
-    ref.read(postCacheProvider.notifier).cachePosts(posts);
+    final result = await _service.getPosts(page: _currentPage);
+    _hasMore = result.hasMore;
 
-    return posts.map((p) => p.id).toList();
+    ref.read(postCacheProvider.notifier).cachePosts(result.posts);
+
+    return result.posts.map((p) => p.id).toList();
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() => _fetchInitialPage());
   }
 
   Future<void> loadMore() async {
@@ -58,18 +68,19 @@ class ExplorePostsNotifier extends AsyncNotifier<List<int>> {
 
     try {
       _currentPage++;
-      final newPosts = await _service.getPosts(page: _currentPage);
+      final result = await _service.getPosts(page: _currentPage);
 
-      if (newPosts.isEmpty) {
-        _hasMore = false;
+      _hasMore = result.hasMore;
+
+      if (result.posts.isEmpty) {
         _isFetchingMore = false;
         return;
       }
 
-      ref.read(postCacheProvider.notifier).cachePosts(newPosts);
+      ref.read(postCacheProvider.notifier).cachePosts(result.posts);
 
       final currentIds = state.value ?? [];
-      final newIds = newPosts.map((p) => p.id).toList();
+      final newIds = result.posts.map((p) => p.id).toList();
 
       state = AsyncData([...currentIds, ...newIds]);
     } catch (e) {

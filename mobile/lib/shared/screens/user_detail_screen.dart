@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/shared/widgets/post_card.dart';
-import 'package:flutter/foundation.dart';
+import 'package:mobile/features/auth/providers/auth_provider.dart';
 
 // Import normalized providers
 import 'package:mobile/shared/providers/post_cache_provider.dart';
 import 'package:mobile/shared/providers/feed_providers.dart'; // For global actions like toggleLike if needed
 
 import '../providers/user_detail_provider.dart';
+import '../widgets/app_error_view.dart';
 
 class UserDetailScreen extends ConsumerWidget {
   final int userId;
@@ -23,44 +24,68 @@ class UserDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userAsync = ref.watch(userDetailProvider(userId));
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
+      appBar: AppBar(
+        title: const Text('Profile'),
+        actions: [
+          // Show logout button only on the user's own profile view
+          if (isOwnProfile)
+            IconButton(
+              icon: const Icon(Icons.logout),
+              tooltip: 'Logout',
+              onPressed: () async {
+                // Optional confirmation dialog
+                final shouldLogout = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Logout'),
+                    content: const Text('Are you sure you want to log out?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text(
+                          'Logout',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (shouldLogout == true) {
+                  // Call logout on your auth notifier
+                  // (Ensure this matches your actual auth provider method name, e.g., signOut or logout)
+                  await ref.read(authProvider.notifier).logout();
+
+                  // GoRouter will automatically handle redirecting to /login based on auth state change
+                }
+              },
+            ),
+        ],
+      ),
       body: userAsync.when(
+        // ... rest of your code remains the same
         loading: () => const Center(child: CircularProgressIndicator()),
 
-        error: (error, stack) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.error_outline, size: 48),
-                const SizedBox(height: 12),
-                const Text(
-                  'Could not load profile.',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Text('$error', textAlign: TextAlign.center),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    ref.invalidate(userDetailProvider(userId));
-                  },
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
-          ),
+        error: (error, stackTrace) => AppErrorView(
+          error: error,
+          onRetry: () =>
+              ref.read(userDetailProvider(userId).notifier).refresh(),
         ),
 
         data: (user) {
           return RefreshIndicator(
             onRefresh: () async {
-              ref.invalidate(userDetailProvider(userId));
-              await ref.read(userDetailProvider(userId).future);
+              // Call the explicit refresh method on our notifier
+              await ref.read(userDetailProvider(userId).notifier).refresh();
             },
             child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
                 SliverToBoxAdapter(
                   child: _ProfileHeader(
@@ -70,6 +95,7 @@ class UserDetailScreen extends ConsumerWidget {
                     followerCount: user.followerCount,
                     followingCount: user.followingCount,
                     isFollowing: user.isFollowing,
+                    isOwnProfile: isOwnProfile,
                   ),
                 ),
 
@@ -88,10 +114,17 @@ class UserDetailScreen extends ConsumerWidget {
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate((context, index) {
+                        // --- INFINITE SCROLL / PAGINATION TRIGGER ---
+                        // If we are within 2 items of the end, trigger loadMore
+                        if (index >= user.posts.length - 2) {
+                          ref
+                              .read(userDetailProvider(userId).notifier)
+                              .loadMore();
+                        }
+
                         final rawPost = user.posts[index];
 
                         // --- NORMALIZED LOOKUP ---
-                        // Watch the central cache using the post ID so updates sync globally
                         final post =
                             ref.watch(postProvider(rawPost.id)) ?? rawPost;
 
@@ -104,7 +137,6 @@ class UserDetailScreen extends ConsumerWidget {
                             );
                           },
                           onLikePressed: () {
-                            // Trigger the global post action notifier to sync likes across Home & Profile
                             ref
                                 .read(homeFeedIdsProvider.notifier)
                                 .toggleLike(post.id);
@@ -150,6 +182,7 @@ class _ProfileHeader extends ConsumerWidget {
   final int followerCount;
   final int followingCount;
   final bool isFollowing;
+  final bool isOwnProfile;
 
   const _ProfileHeader({
     required this.userId,
@@ -158,6 +191,7 @@ class _ProfileHeader extends ConsumerWidget {
     required this.followerCount,
     required this.followingCount,
     required this.isFollowing,
+    required this.isOwnProfile,
   });
 
   @override
@@ -177,7 +211,7 @@ class _ProfileHeader extends ConsumerWidget {
           const SizedBox(height: 12),
 
           Text(
-            '@$username',
+            username,
             style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
 
@@ -196,12 +230,22 @@ class _ProfileHeader extends ConsumerWidget {
 
           SizedBox(
             width: double.infinity,
-            child: OutlinedButton(
-              onPressed: () {
-                ref.read(userDetailProvider(userId).notifier).toggleFollow();
-              },
-              child: Text(isFollowing ? 'Unfollow' : 'Follow'),
-            ),
+            child: isOwnProfile
+                ? OutlinedButton(
+                    onPressed: () {
+                      // Navigate to your edit profile route
+                      // context.push('');
+                    },
+                    child: const Text('Edit Profile'),
+                  )
+                : OutlinedButton(
+                    onPressed: () {
+                      ref
+                          .read(userDetailProvider(userId).notifier)
+                          .toggleFollow();
+                    },
+                    child: Text(isFollowing ? 'Unfollow' : 'Follow'),
+                  ),
           ),
         ],
       ),

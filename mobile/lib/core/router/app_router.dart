@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // <-- Required for SystemNavigator.pop()
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/features/create/screens/create_screen.dart';
@@ -17,19 +18,19 @@ final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
 
   return GoRouter(
-    initialLocation: '/home',
+    initialLocation: '/login',
 
     redirect: (context, state) {
       final location = state.matchedLocation;
 
-      final isLoggedIn = authState.value != null;
+      final isLoggedIn = authState.asData?.value != null;
       final isLoading = authState.isLoading;
+
+      final isAuthRoute = location == '/login' || location == '/register';
 
       if (isLoading) {
         return null;
       }
-
-      final isAuthRoute = location == '/login' || location == '/register';
 
       if (!isLoggedIn && !isAuthRoute) {
         return '/login';
@@ -52,7 +53,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/posts/:id',
         builder: (context, state) {
           final post = state.extra as PostDetailData;
-
           return PostDetailScreen(post: post);
         },
       ),
@@ -60,44 +60,83 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/users/:id',
         builder: (context, state) {
           final userId = int.parse(state.pathParameters['id']!);
-
           return UserDetailScreen(userId: userId);
         },
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
-          return Scaffold(
-            body: navigationShell,
-            bottomNavigationBar: NavigationBar(
-              selectedIndex: navigationShell.currentIndex,
-              onDestinationSelected: navigationShell.goBranch,
-              destinations: const [
-                NavigationDestination(
-                  icon: Icon(Icons.home_outlined),
-                  selectedIcon: Icon(Icons.home),
-                  label: 'Home',
+          return PopScope(
+            canPop: false, // Intercept back gestures/buttons globally on tabs
+            onPopInvokedWithResult: (didPop, result) async {
+              if (didPop) return;
+
+              // 1. If NOT on the Home tab (index 0), jump back to Home
+              if (navigationShell.currentIndex != 0) {
+                navigationShell.goBranch(0);
+                return;
+              }
+
+              // 2. If already on Home, show exit confirmation dialog
+              final shouldExit = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Exit App'),
+                  content: const Text(
+                    'Are you sure you want to exit the application?',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(true),
+                      child: const Text(
+                        'Exit',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ),
+                  ],
                 ),
-                NavigationDestination(
-                  icon: Icon(Icons.explore_outlined),
-                  selectedIcon: Icon(Icons.explore),
-                  label: 'Explore',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.add_circle_outline),
-                  selectedIcon: Icon(Icons.add_circle),
-                  label: 'Create',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.search_outlined),
-                  selectedIcon: Icon(Icons.search),
-                  label: 'Search',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.person_outline),
-                  selectedIcon: Icon(Icons.person),
-                  label: 'Profile',
-                ),
-              ],
+              );
+
+              if (shouldExit == true) {
+                SystemNavigator.pop(); // Safely close the app
+              }
+            },
+            child: Scaffold(
+              body: navigationShell,
+              bottomNavigationBar: NavigationBar(
+                selectedIndex: navigationShell.currentIndex,
+                onDestinationSelected: navigationShell.goBranch,
+                destinations: const [
+                  NavigationDestination(
+                    icon: Icon(Icons.home_outlined),
+                    selectedIcon: Icon(Icons.home),
+                    label: 'Home',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(Icons.explore_outlined),
+                    selectedIcon: Icon(Icons.explore),
+                    label: 'Explore',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(Icons.add_circle_outline),
+                    selectedIcon: Icon(Icons.add_circle),
+                    label: 'Create',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(Icons.search_outlined),
+                    selectedIcon: Icon(Icons.search),
+                    label: 'Search',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(Icons.person_outline),
+                    selectedIcon: Icon(Icons.person),
+                    label: 'Profile',
+                  ),
+                ],
+              ),
             ),
           );
         },
@@ -141,7 +180,16 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (context, state) {
                   final currentUser = ref.read(authProvider).value;
 
-                  return UserDetailScreen(userId: currentUser!.id);
+                  if (currentUser == null) {
+                    return const Scaffold(
+                      body: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+
+                  return UserDetailScreen(
+                    userId: currentUser.id,
+                    isOwnProfile: true,
+                  );
                 },
               ),
             ],
@@ -151,14 +199,3 @@ final routerProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
-
-class PlaceholderScreen extends StatelessWidget {
-  final String title;
-
-  const PlaceholderScreen({super.key, required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(child: Text(title, style: const TextStyle(fontSize: 24)));
-  }
-}

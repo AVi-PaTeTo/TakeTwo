@@ -31,6 +31,10 @@ class PostCacheNotifier extends Notifier<Map<int, Post>> {
       state = {...state, updatedPost.id: updatedPost};
     }
   }
+
+  void clear() {
+    state = {};
+  }
 }
 
 // 3. Family provider: Widgets can watch a specific post ID from anywhere
