@@ -12,5 +12,6 @@ class SuggestedUserSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "username",
+            "profile_picture_url",
             "shared_genres",
         ]

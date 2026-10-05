@@ -11,7 +11,7 @@ User = get_user_model()
 class UserSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "username"]
+        fields = ["id", "username", "profile_picture_url"]
 
 class PostSerializer(serializers.ModelSerializer):
     user = UserSummarySerializer(read_only=True)
@@ -45,6 +45,7 @@ class PostSerializer(serializers.ModelSerializer):
             "title",
             "content",
             "custom_poster_url",
+            "banner_url",
             "like_count",
             "comment_count",
             "is_liked",

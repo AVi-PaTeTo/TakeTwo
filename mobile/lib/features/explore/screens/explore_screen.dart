@@ -19,6 +19,12 @@ class ExploreScreen extends ConsumerStatefulWidget {
 }
 
 class _ExploreScreenState extends ConsumerState<ExploreScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Hide status bar when entering this screen
+  }
+
   final PageController _pageController = PageController();
 
   // Keeps us from repeatedly scheduling the same movie for preloading.

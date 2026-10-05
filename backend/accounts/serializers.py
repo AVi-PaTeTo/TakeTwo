@@ -32,7 +32,22 @@ class RegisterSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'preferred_genres']
+        fields = ['id', 'username', 'email', 'preferred_genres', 'profile_picture_url', 'profile_banner_url',]
+
+class UserProfileUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['username', 'preferred_genres', 'profile_picture_url', 'profile_banner_url']
+        extra_kwargs = {
+            'username': {'required': False},
+            'preferred_genres': {'required': False},
+            'profile_picture_url': {'required': False},
+            'profile_banner_url': {'required': False},
+        }
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True, min_length=8)
 
 class UserPostPagination(PageNumberPagination):
     page_size = 15
@@ -51,6 +66,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "username",
+            'profile_picture_url', 'profile_banner_url',
             "preferred_genres",
             "post_count",
             "follower_count",

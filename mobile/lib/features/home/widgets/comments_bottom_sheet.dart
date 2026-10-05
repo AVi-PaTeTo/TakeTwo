@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/shared/models/comment.dart';
 
 // Use the shared post service provider
+import 'package:mobile/shared/models/user_summary.dart';
+import 'package:mobile/core/router/navigation_helpers.dart';
 import 'package:mobile/shared/providers/post_cache_provider.dart';
 
 class CommentsBottomSheet extends ConsumerStatefulWidget {
@@ -37,7 +39,6 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
 
   Future<void> _loadComments() async {
     try {
-      // Changed to shared postServiceProvider
       final service = ref.read(postServiceProvider);
       final comments = await service.getComments(widget.postId);
 
@@ -61,10 +62,16 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: SizedBox(
-        height: MediaQuery.of(context).size.height * 0.7,
+    final keyboardHeight = MediaQuery.viewInsetsOf(context).bottom;
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: keyboardHeight),
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.65,
+        ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             const Padding(
               padding: EdgeInsets.all(16),
@@ -73,10 +80,10 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
             ),
-
-            Expanded(child: _buildComments()),
-
+            Flexible(child: _buildComments()),
             _buildCommentInput(),
+            if (keyboardHeight == 0)
+              const SafeArea(top: false, child: SizedBox.shrink()),
           ],
         ),
       ),
@@ -105,17 +112,32 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         ListTile(
-          title: Text(
-            '@${comment.user.username}',
-            style: const TextStyle(fontWeight: FontWeight.bold),
+          leading: GestureDetector(
+            onTap: () {
+              openUserProfile(context, ref, comment.user.id);
+            },
+            child: _buildUserAvatar(comment.user),
+          ),
+          title: GestureDetector(
+            onTap: () {
+              openUserProfile(context, ref, comment.user.id);
+            },
+            child: Text(
+              '@${comment.user.username}',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
           subtitle: Text(comment.content),
           trailing: _buildLikeButton(comment),
         ),
-
         Padding(
-          padding: const EdgeInsets.only(left: 16),
+          padding: const EdgeInsets.only(left: 72),
           child: TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: Size.zero,
+              padding: EdgeInsets.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
             onPressed: () {
               setState(() {
                 _replyingTo = comment;
@@ -124,15 +146,10 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
             child: const Text('Reply'),
           ),
         ),
-
         if (comment.replies.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(left: 32),
-            child: Column(
-              children: comment.replies.map((reply) {
-                return _buildReply(reply);
-              }).toList(),
-            ),
+            child: Column(children: comment.replies.map(_buildReply).toList()),
           ),
       ],
     );
@@ -144,9 +161,20 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
       children: [
         ListTile(
           dense: true,
-          title: Text(
-            '@${reply.user.username}',
-            style: const TextStyle(fontWeight: FontWeight.bold),
+          leading: GestureDetector(
+            onTap: () {
+              openUserProfile(context, ref, reply.user.id);
+            },
+            child: _buildUserAvatar(reply.user),
+          ),
+          title: GestureDetector(
+            onTap: () {
+              openUserProfile(context, ref, reply.user.id);
+            },
+            child: Text(
+              '@${reply.user.username}',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
           subtitle: Text(
             reply.replyTo != null
@@ -155,10 +183,14 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
           ),
           trailing: _buildLikeButton(reply),
         ),
-
         Padding(
-          padding: const EdgeInsets.only(left: 16),
+          padding: const EdgeInsets.only(left: 60),
           child: TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: Size.zero,
+              padding: EdgeInsets.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
             onPressed: () {
               setState(() {
                 _replyingTo = reply;
@@ -168,6 +200,30 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildUserAvatar(UserSummary user) {
+    final hasProfilePicture =
+        user.profilePictureUrl != null && user.profilePictureUrl!.isNotEmpty;
+
+    return CircleAvatar(
+      radius: 18,
+      backgroundColor:
+          Colors.primaries[user.username.hashCode % Colors.primaries.length],
+      backgroundImage: hasProfilePicture
+          ? NetworkImage(user.profilePictureUrl!)
+          : null,
+      child: hasProfilePicture
+          ? null
+          : Text(
+              user.username.isNotEmpty ? user.username[0].toUpperCase() : 'U',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
     );
   }
 
@@ -211,24 +267,39 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
                 ),
               ],
             ),
-
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _commentController,
-                  decoration: InputDecoration(
-                    hintText: _replyingTo == null
-                        ? 'Write a comment...'
-                        : 'Write a reply...',
+          Container(
+            padding: const EdgeInsets.fromLTRB(18, 2, 6, 2),
+            decoration: BoxDecoration(
+              color: Colors.white10,
+              borderRadius: BorderRadius.circular(30),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _commentController,
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                    decoration: InputDecoration(
+                      hintText: _replyingTo == null
+                          ? 'Write a comment...'
+                          : 'Write a reply...',
+                      hintStyle: const TextStyle(color: Colors.white54),
+                      border: InputBorder.none,
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                    ),
                   ),
                 ),
-              ),
-              IconButton(
-                onPressed: _submitComment,
-                icon: const Icon(Icons.send),
-              ),
-            ],
+                const SizedBox(width: 8),
+                IconButton(
+                  constraints: const BoxConstraints(),
+                  padding: EdgeInsets.zero,
+                  icon: const Icon(Icons.send_rounded, size: 20),
+                  color: Colors.red,
+                  onPressed: _submitComment,
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -236,15 +307,12 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
   }
 
   Future<void> _toggleCommentLike(Comment comment) async {
-    // Changed to shared postServiceProvider
     final service = ref.read(postServiceProvider);
 
     final wasLiked = comment.isLiked;
     final newLikedState = !wasLiked;
-
     final newLikeCount = comment.likeCount + (newLikedState ? 1 : -1);
 
-    // Optimistic update
     _updateComment(
       comment.id,
       comment.copyWith(isLiked: newLikedState, likeCount: newLikeCount),
@@ -257,7 +325,6 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
         await service.unlikeComment(comment.id);
       }
     } catch (e) {
-      // Roll back if request fails
       _updateComment(
         comment.id,
         comment.copyWith(isLiked: wasLiked, likeCount: comment.likeCount),
@@ -273,19 +340,16 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
   void _updateComment(int commentId, Comment updatedComment) {
     setState(() {
       _comments = _comments.map((comment) {
-        // Root comment
         if (comment.id == commentId) {
           return updatedComment;
         }
 
-        // Reply
         if (comment.replies.any((reply) => reply.id == commentId)) {
           return comment.copyWith(
             replies: comment.replies.map((reply) {
               if (reply.id == commentId) {
                 return updatedComment;
               }
-
               return reply;
             }).toList(),
           );
@@ -314,7 +378,6 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
         );
       }
 
-      // --- UPDATE THE POST CACHE COMMENT COUNT FOR BOTH ---
       final currentPost = ref.read(postProvider(widget.postId));
       if (currentPost != null) {
         ref

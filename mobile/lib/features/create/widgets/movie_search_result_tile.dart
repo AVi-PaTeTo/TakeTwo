@@ -36,56 +36,68 @@ class MovieSearchResultTile extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: SizedBox(
-                width: 64,
-                height: 96,
-                child: _posterUrl != null
-                    ? Image.network(
-                        _posterUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) {
-                          return const _PosterPlaceholder();
-                        },
-                      )
-                    : const _PosterPlaceholder(),
-              ),
-            ),
-
-            const SizedBox(width: 12),
-
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      result.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    if (_year.isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        _year,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    ],
-                  ],
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white10,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Padding(
+          padding: const EdgeInsets.all(0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: SizedBox(
+                  width: 82,
+                  height: 112,
+                  child: _posterUrl != null
+                      ? Image.network(
+                          _posterUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) {
+                            return const _PosterPlaceholder();
+                          },
+                        )
+                      : const _PosterPlaceholder(),
                 ),
               ),
-            ),
 
-            const Icon(Icons.chevron_right),
-          ],
+              const SizedBox(width: 12),
+
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        result.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      if (_year.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          _year,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+
+              // Container(
+              //   width: 8,
+              //   height: 112,
+              //   decoration: BoxDecoration(color: Colors.blue),
+              // ),
+              // const Icon(Icons.chevron_right),
+            ],
+          ),
         ),
       ),
     );

@@ -3,6 +3,8 @@ import 'post.dart';
 class UserDetail {
   final int id;
   final String username;
+  final String? profilePictureUrl;
+  final String? profileBannerUrl;
   final List<int> preferredGenres;
   final int postCount;
   final int followerCount;
@@ -14,6 +16,8 @@ class UserDetail {
   UserDetail({
     required this.id,
     required this.username,
+    this.profilePictureUrl,
+    this.profileBannerUrl,
     required this.preferredGenres,
     required this.postCount,
     required this.followerCount,
@@ -39,6 +43,8 @@ class UserDetail {
     return UserDetail(
       id: json['id'],
       username: json['username'],
+      profilePictureUrl: json['profile_picture_url'] ?? '',
+      profileBannerUrl: json['profile_banner_url'] ?? '',
       preferredGenres: List<int>.from(json['preferred_genres'] ?? []),
       postCount: json['post_count'] ?? 0,
       followerCount: json['follower_count'] ?? 0,
@@ -59,6 +65,8 @@ class UserDetail {
       id: id,
       username: username,
       preferredGenres: preferredGenres,
+      profilePictureUrl: profilePictureUrl,
+      profileBannerUrl: profileBannerUrl,
       postCount: postCount,
       followerCount: followerCount ?? this.followerCount,
       followingCount: followingCount,

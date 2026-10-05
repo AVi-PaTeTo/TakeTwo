@@ -16,6 +16,10 @@ dependencies:
     fluttertoast: ^10.0.0
     go_router: ^18.0.1
     url_launcher: ^6.3.2
+    image_picker: ^1.1.2
+    image_cropper: ^8.0.3
+    crop_your_image: ^2.0.1
+    youtube_player_flutter: ^10.0.1
 
 dev_dependencies:
     flutter_test:

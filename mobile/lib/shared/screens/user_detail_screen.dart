@@ -1,8 +1,10 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/shared/widgets/post_card.dart';
 import 'package:mobile/features/auth/providers/auth_provider.dart';
+import 'package:mobile/features/profile/screens/edit_profile_screen.dart';
 
 // Import normalized providers
 import 'package:mobile/shared/providers/post_cache_provider.dart';
@@ -27,11 +29,17 @@ class UserDetailScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile'),
+        title: Text(
+          userAsync.maybeWhen(
+            data: (user) => user.username,
+            orElse: () => 'Profile',
+          ),
+        ),
         actions: [
           // Show logout button only on the user's own profile view
           if (isOwnProfile)
             IconButton(
+              color: Colors.white,
               icon: const Icon(Icons.logout),
               tooltip: 'Logout',
               onPressed: () async {
@@ -58,8 +66,6 @@ class UserDetailScreen extends ConsumerWidget {
                 );
 
                 if (shouldLogout == true) {
-                  // Call logout on your auth notifier
-                  // (Ensure this matches your actual auth provider method name, e.g., signOut or logout)
                   await ref.read(authProvider.notifier).logout();
 
                   // GoRouter will automatically handle redirecting to /login based on auth state change
@@ -69,7 +75,6 @@ class UserDetailScreen extends ConsumerWidget {
         ],
       ),
       body: userAsync.when(
-        // ... rest of your code remains the same
         loading: () => const Center(child: CircularProgressIndicator()),
 
         error: (error, stackTrace) => AppErrorView(
@@ -91,6 +96,9 @@ class UserDetailScreen extends ConsumerWidget {
                   child: _ProfileHeader(
                     userId: userId,
                     username: user.username,
+                    profileBannerUrl: user.profileBannerUrl,
+                    profilePictureUrl: user.profilePictureUrl,
+                    preferredGenres: user.preferredGenres,
                     postCount: user.postCount,
                     followerCount: user.followerCount,
                     followingCount: user.followingCount,
@@ -111,7 +119,7 @@ class UserDetailScreen extends ConsumerWidget {
                   )
                 else
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate((context, index) {
                         // --- INFINITE SCROLL / PAGINATION TRIGGER ---
@@ -163,13 +171,18 @@ class _Stat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           '$value',
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
         ),
         const SizedBox(height: 4),
-        Text(label),
+        Text(label, style: const TextStyle(color: Colors.white70)),
       ],
     );
   }
@@ -178,6 +191,9 @@ class _Stat extends StatelessWidget {
 class _ProfileHeader extends ConsumerWidget {
   final int userId;
   final String username;
+  final List<int> preferredGenres;
+  final String? profilePictureUrl;
+  final String? profileBannerUrl;
   final int postCount;
   final int followerCount;
   final int followingCount;
@@ -187,6 +203,9 @@ class _ProfileHeader extends ConsumerWidget {
   const _ProfileHeader({
     required this.userId,
     required this.username,
+    required this.profilePictureUrl,
+    required this.profileBannerUrl,
+    required this.preferredGenres,
     required this.postCount,
     required this.followerCount,
     required this.followingCount,
@@ -197,55 +216,217 @@ class _ProfileHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(0),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 42,
-            child: Text(
-              username.isNotEmpty ? username[0].toUpperCase() : '?',
-              style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+          Container(
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(20),
+                // bottomRight: Radius.circular(20),
+              ),
+            ),
+            child: Stack(
+              children: [
+                AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child:
+                      (profileBannerUrl != null && profileBannerUrl!.isNotEmpty)
+                      ? CachedNetworkImage(
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          imageUrl: profileBannerUrl!,
+                          placeholder: (context, url) => const ColoredBox(
+                            color: Colors.black12,
+                            child: Center(
+                              child: SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) =>
+                              const ColoredBox(
+                                color: Colors.black26,
+                                child: Center(
+                                  child: Icon(
+                                    Icons.broken_image_outlined,
+                                    color: Colors.white54,
+                                    size: 32,
+                                  ),
+                                ),
+                              ),
+                        )
+                      : const ColoredBox(
+                          color: Colors.black26,
+                        ), // Fallback if no banner
+                ),
+                Positioned(
+                  bottom: 0,
+                  child: Container(
+                    height: 130,
+                    width: 130,
+                    padding: EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(100),
+                        topRight: Radius.circular(100),
+                        bottomRight: Radius.circular(100),
+                        bottomLeft: Radius.circular(20),
+                      ),
+                    ),
+                    child: Container(
+                      clipBehavior: Clip.antiAlias,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(100),
+                          topRight: Radius.circular(100),
+                          bottomRight: Radius.circular(100),
+                          bottomLeft: Radius.circular(20),
+                        ),
+                      ),
+                      child:
+                          (profilePictureUrl != null &&
+                              profilePictureUrl!.isNotEmpty)
+                          ? CachedNetworkImage(
+                              fit: BoxFit.cover,
+                              imageUrl: profilePictureUrl!,
+                              placeholder: (context, url) => const ColoredBox(
+                                color: Colors.black12,
+                                child: Center(
+                                  child: SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              errorWidget: (context, url, error) => ColoredBox(
+                                color: Colors.grey.shade300,
+                                child: Center(
+                                  child: Text(
+                                    username.isNotEmpty
+                                        ? username[0].toUpperCase()
+                                        : '?',
+                                    style: const TextStyle(
+                                      fontSize: 56,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black54,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            )
+                          : ColoredBox(
+                              color: Colors.grey.shade300,
+                              child: Center(
+                                child: Text(
+                                  username.isNotEmpty
+                                      ? username[0].toUpperCase()
+                                      : '?',
+                                  style: const TextStyle(
+                                    fontSize: 36,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black54,
+                                  ),
+                                ),
+                              ),
+                            ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-
-          const SizedBox(height: 12),
-
-          Text(
-            username,
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-          ),
-
-          const SizedBox(height: 20),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _Stat(value: postCount, label: 'Posts'),
-              _Stat(value: followerCount, label: 'Followers'),
-              _Stat(value: followingCount, label: 'Following'),
-            ],
-          ),
-
-          const SizedBox(height: 20),
-
-          SizedBox(
-            width: double.infinity,
-            child: isOwnProfile
-                ? OutlinedButton(
-                    onPressed: () {
-                      // Navigate to your edit profile route
-                      // context.push('');
-                    },
-                    child: const Text('Edit Profile'),
-                  )
-                : OutlinedButton(
-                    onPressed: () {
-                      ref
-                          .read(userDetailProvider(userId).notifier)
-                          .toggleFollow();
-                    },
-                    child: Text(isFollowing ? 'Unfollow' : 'Follow'),
+          Container(
+            padding: EdgeInsets.fromLTRB(12, 12, 12, 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+              ),
+              // color: const Color.fromARGB(255, 218, 218, 218),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '@$username',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight(700),
+                    color: Colors.white,
                   ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Container(
+                        alignment: Alignment.center,
+                        child: _Stat(value: postCount, label: 'Posts'),
+                      ),
+                    ),
+                    Expanded(
+                      child: Container(
+                        alignment: Alignment.center,
+                        child: _Stat(value: followerCount, label: 'Followers'),
+                      ),
+                    ),
+                    Expanded(
+                      child: Container(
+                        alignment: Alignment.center,
+                        child: _Stat(value: followingCount, label: 'Following'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: isOwnProfile
+                      ? OutlinedButton(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => EditProfileScreen(
+                                  initialUsername: username,
+                                  initialGenres: preferredGenres,
+                                  initialAvatarUrl: profilePictureUrl,
+                                  initialBannerUrl: profileBannerUrl,
+                                  onProfileUpdated: () async {
+                                    await ref
+                                        .read(
+                                          userDetailProvider(userId).notifier,
+                                        )
+                                        .refresh();
+                                  },
+                                ),
+                              ),
+                            );
+                          },
+                          child: const Text('Edit Profile'),
+                        )
+                      : OutlinedButton(
+                          onPressed: () {
+                            ref
+                                .read(userDetailProvider(userId).notifier)
+                                .toggleFollow();
+                          },
+                          child: Text(isFollowing ? 'Unfollow' : 'Follow'),
+                        ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

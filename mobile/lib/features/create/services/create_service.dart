@@ -1,3 +1,8 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
+
+
 import '../models/movie.dart';
 import '../models/tmdb_search_result.dart';
 
@@ -42,11 +47,28 @@ class CreateService {
     required int movieId,
     required String title,
     required String content,
+    File? bannerImage,
+    File? posterImage,
   }) async {
-    final response = await apiClient.dio.post(
-      'posts/create/',
-      data: {'movie_id': movieId, 'title': title, 'content': content},
-    );
+    // Construct FormData to combine text data and the file attachment
+    final formData = FormData.fromMap({
+      'movie_id': movieId,
+      'title': title,
+      'content': content,
+      if (bannerImage != null)
+        'banner_image': await MultipartFile.fromFile(
+          bannerImage.path,
+          filename: bannerImage.path.split('/').last,
+        ),
+      if (posterImage != null)
+        'poster_image': await MultipartFile.fromFile(
+          posterImage.path,
+          filename: posterImage.path.split('/').last,
+        ),
+    });
+
+    final response = await apiClient.dio.post('posts/create/', data: formData);
+
     return response.data;
   }
 }

@@ -18,6 +18,7 @@ class Post(models.Model):
     title = models.CharField(max_length=255)
     content = models.TextField()
     custom_poster_url = models.URLField(blank=True)
+    banner_url = models.URLField(blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

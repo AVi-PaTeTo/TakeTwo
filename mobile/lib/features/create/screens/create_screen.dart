@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -22,10 +24,14 @@ class CreateScreen extends ConsumerStatefulWidget {
 class _CreateScreenState extends ConsumerState<CreateScreen> {
   final _titleController = TextEditingController();
   final _contentController = TextEditingController();
+  File? _bannerImageFile;
+  File? _posterImageFile;
 
   bool get _hasChanges {
     return _titleController.text.trim().isNotEmpty ||
         _contentController.text.trim().isNotEmpty ||
+        _bannerImageFile != null ||
+        _posterImageFile != null ||
         ref.read(createProvider).selectedMovie != null;
   }
 
@@ -69,6 +75,8 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
 
     if (!mounted || !canExit) return;
 
+    setState(() => _bannerImageFile = null);
+    setState(() => _posterImageFile = null);
     ref.read(createProvider.notifier).reset();
     if (Navigator.canPop(context)) {
       Navigator.of(context).pop();
@@ -97,7 +105,12 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
     try {
       final postJson = await ref
           .read(createProvider.notifier)
-          .createPost(title: title, content: content);
+          .createPost(
+            title: title,
+            content: content,
+            bannerImage: _bannerImageFile,
+            posterImage: _posterImageFile,
+          );
 
       if (!mounted) return;
 
@@ -149,6 +162,18 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
                     state: state,
                     titleController: _titleController,
                     contentController: _contentController,
+                    onBannerImageSelected: (file) {
+                      setState(() {
+                        _bannerImageFile =
+                            file; // Updates the file in your parent screen
+                      });
+                    },
+                    onPosterImageSelected: (file) {
+                      setState(() {
+                        _posterImageFile =
+                            file; // Updates the file in your parent screen
+                      });
+                    },
                     onCreate: _createPost,
                   ),
           ),
@@ -232,12 +257,16 @@ class _WritingView extends StatelessWidget {
   final CreateState state;
   final TextEditingController titleController;
   final TextEditingController contentController;
+  final ValueChanged<File?> onBannerImageSelected;
+  final ValueChanged<File?> onPosterImageSelected;
   final VoidCallback onCreate;
 
   const _WritingView({
     required this.state,
     required this.titleController,
     required this.contentController,
+    required this.onBannerImageSelected,
+    required this.onPosterImageSelected,
     required this.onCreate,
   });
 
@@ -255,8 +284,11 @@ class _WritingView extends StatelessWidget {
               const SizedBox(height: 24),
 
               CreatePostForm(
+                movie: state.selectedMovie!,
                 titleController: titleController,
                 contentController: contentController,
+                onBannerImageSelected: onBannerImageSelected,
+                onPosterImageSelected: onPosterImageSelected,
               ),
             ],
           ),

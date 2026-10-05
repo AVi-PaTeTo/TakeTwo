@@ -2,10 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // <-- Required for SystemNavigator.pop()
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobile/features/auth/models/user.dart';
 import 'package:mobile/features/create/screens/create_screen.dart';
 import 'package:mobile/features/explore/screens/explore_screen.dart';
 import 'package:mobile/features/search/screens/search_screen.dart';
+import 'package:mobile/shared/models/movie.dart';
+import 'package:mobile/shared/models/post.dart';
 import 'package:mobile/shared/models/post_detail_data.dart';
+import 'package:mobile/shared/models/user_summary.dart';
+import 'package:mobile/shared/widgets/post_card.dart';
 
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/screens/login_screen.dart';
@@ -106,36 +111,100 @@ final routerProvider = Provider<GoRouter>((ref) {
             },
             child: Scaffold(
               body: navigationShell,
-              bottomNavigationBar: NavigationBar(
-                selectedIndex: navigationShell.currentIndex,
-                onDestinationSelected: navigationShell.goBranch,
-                destinations: const [
-                  NavigationDestination(
-                    icon: Icon(Icons.home_outlined),
-                    selectedIcon: Icon(Icons.home),
-                    label: 'Home',
+              bottomNavigationBar: Theme(
+                data: Theme.of(context).copyWith(
+                  splashFactory: NoSplash.splashFactory,
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
+                  navigationBarTheme: NavigationBarThemeData(
+                    // Removes the Material 3 state layer overlay color on tap/hover
+                    overlayColor: WidgetStateProperty.all(Colors.transparent),
                   ),
-                  NavigationDestination(
-                    icon: Icon(Icons.explore_outlined),
-                    selectedIcon: Icon(Icons.explore),
-                    label: 'Explore',
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border(
+                      top: BorderSide(color: Colors.grey.shade800, width: 0.5),
+                    ),
                   ),
-                  NavigationDestination(
-                    icon: Icon(Icons.add_circle_outline),
-                    selectedIcon: Icon(Icons.add_circle),
-                    label: 'Create',
+                  child: NavigationBar(
+                    indicatorColor: Color.fromARGB(0, 0, 0, 0),
+                    animationDuration: Duration(milliseconds: 0),
+                    selectedIndex: navigationShell.currentIndex,
+                    onDestinationSelected: navigationShell.goBranch,
+                    height: 54,
+                    labelBehavior:
+                        NavigationDestinationLabelBehavior.alwaysHide,
+                    destinations: const [
+                      NavigationDestination(
+                        icon: Icon(
+                          Icons.home_rounded,
+                          size: 32,
+                          // color: Color.fromARGB(168, 255, 255, 255),
+                        ),
+                        selectedIcon: Icon(
+                          Icons.home_rounded,
+                          color: Color.fromARGB(255, 231, 44, 53),
+
+                          size: 32,
+                        ),
+                        label: '',
+                      ),
+                      NavigationDestination(
+                        icon: Icon(
+                          Icons.explore_outlined,
+                          size: 32,
+                          // color: Color.fromARGB(168, 255, 255, 255),
+                        ),
+                        selectedIcon: Icon(
+                          Icons.explore_rounded,
+                          size: 32,
+                          color: Color.fromARGB(255, 231, 44, 53),
+                        ),
+                        label: '',
+                      ),
+                      NavigationDestination(
+                        icon: Icon(
+                          Icons.add_circle_outline_rounded,
+                          size: 32,
+                          // color: Color.fromARGB(168, 255, 255, 255),
+                        ),
+                        selectedIcon: Icon(
+                          Icons.add_circle_rounded,
+                          size: 32,
+                          color: Color.fromARGB(255, 231, 44, 53),
+                        ),
+                        label: '',
+                      ),
+                      NavigationDestination(
+                        icon: Icon(
+                          Icons.search_rounded,
+                          size: 32,
+                          // color: Color.fromARGB(168, 255, 255, 255),
+                        ),
+                        selectedIcon: Icon(
+                          Icons.search_rounded,
+                          size: 32,
+                          color: Color.fromARGB(255, 231, 44, 53),
+                        ),
+                        label: '',
+                      ),
+                      NavigationDestination(
+                        icon: Icon(
+                          Icons.person_rounded,
+                          size: 32,
+                          // color: Color.fromARGB(168, 255, 255, 255),
+                        ),
+                        selectedIcon: Icon(
+                          Icons.person,
+                          size: 32,
+                          color: Color.fromARGB(255, 231, 44, 53),
+                        ),
+                        label: '',
+                      ),
+                    ],
                   ),
-                  NavigationDestination(
-                    icon: Icon(Icons.search_outlined),
-                    selectedIcon: Icon(Icons.search),
-                    label: 'Search',
-                  ),
-                  NavigationDestination(
-                    icon: Icon(Icons.person_outline),
-                    selectedIcon: Icon(Icons.person),
-                    label: 'Profile',
-                  ),
-                ],
+                ),
               ),
             ),
           );

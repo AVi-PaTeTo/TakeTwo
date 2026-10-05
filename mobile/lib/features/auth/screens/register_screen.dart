@@ -246,7 +246,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
                       Wrap(
                         spacing: 8,
-                        runSpacing: 8,
+                        runSpacing: 4,
                         children: _genres.map((genre) {
                           final selected = _selectedGenres.contains(genre.id);
 
@@ -268,7 +268,19 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
                       const SizedBox(height: 16),
 
-                      Text('${_selectedGenres.length} / 5 selected'),
+                      Text(
+                        _selectedGenres.length < 5
+                            ? '${_selectedGenres.length} / 5 selected'
+                            : '${_selectedGenres.length} selected ✓',
+                        style: TextStyle(
+                          color: _selectedGenres.length >= 5
+                              ? Colors.green
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontWeight: _selectedGenres.length >= 5
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                        ),
+                      ),
 
                       const SizedBox(height: 24),
 

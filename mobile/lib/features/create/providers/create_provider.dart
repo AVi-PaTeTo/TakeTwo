@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -158,6 +159,8 @@ class CreateNotifier extends Notifier<CreateState> {
   Future<dynamic> createPost({
     required String title,
     required String content,
+    File? bannerImage,
+    File? posterImage,
   }) async {
     final movie = state.selectedMovie;
 
@@ -174,6 +177,8 @@ class CreateNotifier extends Notifier<CreateState> {
         movieId: movie.id,
         title: title.trim(),
         content: content.trim(),
+        bannerImage: bannerImage,
+        posterImage: posterImage,
       );
 
       state = state.copyWith(isCreating: false);

@@ -1,11 +1,12 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:mobile/shared/models/post.dart';
 import 'package:mobile/shared/providers/post_cache_provider.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+import 'package:mobile/shared/providers/feed_providers.dart';
+import 'package:mobile/features/home/widgets/comments_bottom_sheet.dart';
+import 'package:mobile/core/router/navigation_helpers.dart';
 
-import '../../../core/config/tmdb_image.dart';
 import '../utils/genre_names.dart';
 
 class ExplorePost extends ConsumerStatefulWidget {
@@ -17,92 +18,77 @@ class ExplorePost extends ConsumerStatefulWidget {
   ConsumerState<ExplorePost> createState() => _ExplorePostState();
 }
 
-class _ExplorePostState extends ConsumerState<ExplorePost> {
-  bool _isExpanded = false;
+class _ExplorePostState extends ConsumerState<ExplorePost>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _expandController;
+  late final Animation<double> _expandAnimation;
 
-  Future<void> _openTrailer() async {
-    final url = Uri.tryParse(widget.post.movie.trailerUrl);
+  @override
+  void initState() {
+    super.initState();
 
-    if (url == null) {
+    _expandController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+
+    _expandAnimation = CurvedAnimation(
+      parent: _expandController,
+      curve: Curves.easeInOut,
+    );
+  }
+
+  @override
+  void dispose() {
+    _expandController.dispose();
+    super.dispose();
+  }
+
+  void _toggleExpanded() {
+    if (_expandController.isCompleted) {
+      _expandController.reverse();
+    } else {
+      _expandController.forward();
+    }
+  }
+
+  void _openInAppTrailer(String trailerUrl) {
+    final videoId = YoutubePlayerController.convertUrlToId(trailerUrl);
+
+    if (videoId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not load trailer video')),
+      );
       return;
     }
 
-    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Could not open trailer')));
-    }
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (context) => Dialog.fullscreen(
+        backgroundColor: Colors.black,
+        child: _TrailerPlayerView(videoId: videoId),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // Watch the normalized cache so likes/comments/etc.
-    // stay synchronized across the app.
     final post = ref.watch(postProvider(widget.post.id)) ?? widget.post;
-
-    final posterPath = post.customPosterUrl?.isNotEmpty == true
-        ? post.customPosterUrl!
-        : TmdbImage.poster(post.movie.posterPath);
 
     return Stack(
       fit: StackFit.expand,
       children: [
-        CachedNetworkImage(
-          key: ValueKey(posterPath),
-          imageUrl: posterPath,
-          fit: BoxFit.cover,
-
-          // No spinner.
-          //
-          // If the prefetch has completed, the image should
-          // appear immediately. If it hasn't, we use a
-          // simple black background while it loads.
-          placeholder: (context, url) {
-            return const ColoredBox(color: Colors.black);
-          },
-
-          errorWidget: (context, url, error) {
-            return const ColoredBox(
-              color: Colors.black,
-              child: Center(
-                child: Icon(Icons.broken_image, color: Colors.white, size: 48),
-              ),
-            );
-          },
-        ),
-
-        // Dark gradient overlay.
-        Positioned.fill(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                stops: const [0.45, 1.0],
-                colors: [
-                  Colors.transparent,
-                  Colors.black.withValues(alpha: 0.9),
-                ],
-              ),
-            ),
-          ),
-        ),
-
         Positioned(
-          left: 20,
-          right: 20,
-          bottom: 32,
+          left: 8,
+          right: 12,
+          bottom: 10,
           child: GestureDetector(
-            onTap: () {
-              setState(() {
-                _isExpanded = !_isExpanded;
-              });
-            },
-            child: AnimatedSize(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
+            onTap: _toggleExpanded,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.sizeOf(context).height * 0.75,
+              ),
               child: _buildInfo(post),
             ),
           ),
@@ -123,133 +109,287 @@ class _ExplorePostState extends ConsumerState<ExplorePost> {
       releaseYear = post.movie.releaseDate!.substring(0, 4);
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          post.movie.title,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 26,
-            fontWeight: FontWeight.bold,
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ------------------------------------------------------------
+          // HEADER
+          // ------------------------------------------------------------
+
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                post.movie.title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 6),
+
+              Text(
+                post.title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+
+              const SizedBox(height: 8),
+
+              GestureDetector(
+                onTap: () {
+                  openUserProfile(context, ref, post.user.id);
+                },
+                child: Text(
+                  '@${post.user.username}',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
+              const SizedBox(height: 8),
 
-        const SizedBox(height: 6),
+          // ------------------------------------------------------
+          // TRAILER + LIKE + COMMENT
+          // ------------------------------------------------------
+          Row(
+            children: [
+              // Watch Trailer
+              if (post.movie.trailerUrl.isNotEmpty) ...[
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: () => _openInAppTrailer(post.movie.trailerUrl),
+                    icon: const Icon(Icons.play_arrow),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(193, 211, 47, 47),
+                    ),
+                    label: const Text('Watch Trailer'),
+                  ),
+                ),
 
-        Text(
-          post.title,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.w500,
+                const SizedBox(width: 20),
+              ],
+
+              // Like
+              _ActionButton(
+                icon: post.isLiked ? Icons.favorite : Icons.favorite_border,
+                label: '${post.likeCount}',
+                iconColor: post.isLiked ? Colors.red : Colors.white,
+                onPressed: () {
+                  ref.read(homeFeedIdsProvider.notifier).toggleLike(post.id);
+                },
+              ),
+
+              const SizedBox(width: 8),
+
+              // Comments
+              _ActionButton(
+                icon: Icons.chat_bubble_outline_rounded,
+                label: '${post.commentCount}',
+                onPressed: () {
+                  showModalBottomSheet(
+                    context: context,
+                    // isScrollControlled: true,
+                    builder: (_) {
+                      return CommentsBottomSheet(postId: post.id);
+                    },
+                  );
+                },
+              ),
+            ],
           ),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
 
-        const SizedBox(height: 8),
+          // ------------------------------------------------------------
+          // EXPANDED CONTENT
+          // ------------------------------------------------------------
+          SizeTransition(
+            sizeFactor: _expandAnimation,
+            axisAlignment: -1.0,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 16),
+                // ------------------------------------------------------
+                // SCROLLABLE CONTENT
+                // ------------------------------------------------------
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.sizeOf(context).height * 0.35,
+                  ),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'About the movie',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
 
-        Text(
-          '@${post.user.username}',
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.8),
-            fontSize: 14,
-          ),
-        ),
+                        const SizedBox(height: 6),
 
-        const SizedBox(height: 12),
+                        Text(
+                          post.movie.overview,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.85),
+                            fontSize: 14,
+                            height: 1.4,
+                          ),
+                        ),
 
-        if (_isExpanded) ...[
-          Text(
-            post.content,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 15,
-              height: 1.4,
+                        const SizedBox(height: 12),
+
+                        if (releaseYear != null)
+                          Text(
+                            releaseYear,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
+                          ),
+
+                        if (genres.isNotEmpty)
+                          Text(
+                            genres,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
+                          ),
+
+                        const SizedBox(height: 12),
+
+                        Text(
+                          post.content,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            height: 1.4,
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
 
-          const SizedBox(height: 16),
+// ======================================================================
+// LIKE / COMMENT BUTTON
+// ======================================================================
 
-          const Text(
-            'About the movie',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color iconColor;
+  final VoidCallback onPressed;
 
-          const SizedBox(height: 6),
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+    this.iconColor = Colors.white,
+  });
 
-          Text(
-            post.movie.overview,
-            maxLines: 4,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.85),
-              fontSize: 14,
-              height: 1.4,
-            ),
-          ),
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: iconColor, size: 26),
 
-          if (post.movie.trailerUrl.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: FilledButton.icon(
-                onPressed: _openTrailer,
-                icon: const Icon(Icons.play_arrow),
-                label: const Text('Watch Trailer'),
+            const SizedBox(height: 2),
+
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
               ),
             ),
-
-          const SizedBox(height: 12),
-
-          if (releaseYear != null)
-            Text(
-              releaseYear,
-              style: const TextStyle(color: Colors.white70, fontSize: 14),
-            ),
-
-          if (genres.isNotEmpty)
-            Text(
-              genres,
-              style: const TextStyle(color: Colors.white70, fontSize: 14),
-            ),
-
-          const SizedBox(height: 16),
-        ],
-
-        Row(
-          children: [
-            const Icon(Icons.favorite_border, color: Colors.white, size: 22),
-
-            const SizedBox(width: 6),
-
-            Text(
-              '${post.likeCount}',
-              style: const TextStyle(color: Colors.white),
-            ),
-
-            const SizedBox(width: 20),
-
-            const Icon(Icons.comment_outlined, color: Colors.white, size: 22),
-
-            const SizedBox(width: 6),
-
-            Text(
-              '${post.commentCount}',
-              style: const TextStyle(color: Colors.white),
-            ),
-
-            const Spacer(),
-
-            Icon(
-              _isExpanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_up,
-              color: Colors.white,
-            ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// ======================================================================
+// IN-APP YOUTUBE PLAYER
+// ======================================================================
+
+class _TrailerPlayerView extends StatefulWidget {
+  final String videoId;
+
+  const _TrailerPlayerView({required this.videoId});
+
+  @override
+  State<_TrailerPlayerView> createState() => _TrailerPlayerViewState();
+}
+
+class _TrailerPlayerViewState extends State<_TrailerPlayerView> {
+  late final YoutubePlayerController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = YoutubePlayerController.fromVideoId(
+      videoId: widget.videoId,
+      autoPlay: true,
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.close();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Center(child: YoutubePlayer(controller: _controller)),
+
+        Positioned(
+          top: 40,
+          right: 20,
+          child: IconButton(
+            icon: const Icon(Icons.close, color: Colors.white, size: 30),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
         ),
       ],
     );

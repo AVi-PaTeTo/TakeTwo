@@ -1,5 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Q
+from rest_framework.parsers import MultiPartParser, FormParser
+import cloudinary.uploader
 
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
@@ -14,9 +16,38 @@ User = get_user_model()
 class PostCreateView(generics.CreateAPIView):
     serializer_class = PostSerializer
     permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+
+        banner_image = self.request.FILES.get('banner_image') # File sent from Flutter
+        poster_image = self.request.FILES.get('poster_image') # File sent from Flutter
+        poster_image_url = ''
+        banner_image_url = ''
+
+        if banner_image:
+            # Upload to Cloudinary during post creation
+            upload_result = cloudinary.uploader.upload(
+                banner_image,
+                folder="post_banners"
+            )
+            banner_image_url = upload_result.get("secure_url")
+
+        if poster_image:
+                    # Upload to Cloudinary during post creation
+                    upload_result = cloudinary.uploader.upload(
+                        poster_image,
+                        folder="movie_posters"
+                    )
+                    poster_image_url = upload_result.get("secure_url")
+
+        print(banner_image_url)
+        # Save the post along with the user and the uploaded image URL
+        serializer.save(
+            user=self.request.user,
+            banner_url=banner_image_url,
+            custom_poster_url=poster_image_url,
+        )
 
 class PostListView(generics.ListAPIView):
     serializer_class = PostSerializer
@@ -291,3 +322,4 @@ class MoviePostsView(generics.ListAPIView):
             .prefetch_related("likes", "comments")
             .order_by("-created_at")
         )
+

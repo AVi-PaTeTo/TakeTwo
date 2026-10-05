@@ -33,6 +33,7 @@ class _MovieSearchBarState extends State<MovieSearchBar> {
   Widget build(BuildContext context) {
     return TextField(
       controller: _controller,
+      onSubmitted: widget.onChanged,
       onChanged: widget.onChanged,
       textInputAction: TextInputAction.search,
       decoration: InputDecoration(
