@@ -41,7 +41,6 @@ class PostCreateView(generics.CreateAPIView):
                     )
                     poster_image_url = upload_result.get("secure_url")
 
-        print(banner_image_url)
         # Save the post along with the user and the uploaded image URL
         serializer.save(
             user=self.request.user,

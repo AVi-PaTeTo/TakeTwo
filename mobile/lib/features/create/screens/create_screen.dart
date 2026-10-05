@@ -3,7 +3,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mobile/features/search/models/search_post.dart';
+
+import 'package:mobile/shared/models/post.dart';
+import 'package:mobile/shared/providers/post_cache_provider.dart';
 
 import 'package:fluttertoast/fluttertoast.dart';
 
@@ -114,20 +116,24 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
 
       if (!mounted) return;
 
-      final post = SearchPost.fromJson(postJson as Map<String, dynamic>);
-
+      final postMap = postJson as Map<String, dynamic>;
+      final newPost = Post.fromJson(postMap);
+      ref.read(postCacheProvider.notifier).cachePosts([newPost]);
+      final post = Post.fromJson(postMap);
       ref.read(createProvider.notifier).reset();
 
       context.go('/home');
       context.push('/posts/${post.id}', extra: post.toPostDetailData());
-    } catch (_) {
+    } catch (e, stackTrace) {
+      debugPrint('CREATE POST ERROR: $e');
+      debugPrint('STACK TRACE: $stackTrace');
+
       if (!mounted) return;
 
       Fluttertoast.showToast(
         msg: "Unable to create your post. Please try again.",
         toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM, // BOTTOM, CENTER, or TOP
-        timeInSecForIosWeb: 1,
+        gravity: ToastGravity.BOTTOM,
         backgroundColor: Colors.white,
         textColor: Colors.black87,
         fontSize: 16.0,
@@ -243,6 +249,7 @@ class _SearchView extends ConsumerWidget {
 
                 return MovieSearchResultTile(
                   result: result,
+                  mediaType: state.mediaType,
                   onTap: () => notifier.selectMovie(result),
                 );
               },

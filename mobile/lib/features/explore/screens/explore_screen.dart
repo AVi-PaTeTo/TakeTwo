@@ -41,7 +41,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
       return post.customPosterUrl;
     }
 
-    if (post.movie.posterPath?.isNotEmpty == true) {
+    if (post.movie.posterPath.isNotEmpty == true) {
       return TmdbImage.poster(post.movie.posterPath);
     }
 
@@ -151,18 +151,22 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
               scrollDirection: Axis.vertical,
               itemCount: movies.length,
 
+              // Allows Flutter to build adjacent pages ahead of time.
+              allowImplicitScrolling: true,
+
               onPageChanged: (index) {
-                // Prepare the next two vertical pages.
                 _precacheNearbyMovies(movies, postCache, index);
 
-                // Load more backend data near the end.
                 if (index >= movies.length - 2) {
                   ref.read(explorePostsProvider.notifier).loadMore();
                 }
               },
 
               itemBuilder: (context, index) {
-                return ExploreMoviePage(post: movies[index]);
+                return ExploreMoviePage(
+                  key: ValueKey('explore-movie-${movies[index].movie.id}'),
+                  post: movies[index],
+                );
               },
             );
           },

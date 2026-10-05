@@ -76,6 +76,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
       if (genres.isNotEmpty) genres,
     ].join(' · ');
 
+    debugPrint('BANNER URL: ${widget.post.bannerUrl}');
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 50,

@@ -33,6 +33,36 @@ class MediaTypeToggle extends StatelessWidget {
         onSelectionChanged: (selection) {
           onChanged(selection.first);
         },
+        showSelectedIcon: false,
+        style: ButtonStyle(
+          padding: const WidgetStatePropertyAll(
+            EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+          ),
+          textStyle: const WidgetStatePropertyAll(
+            TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          ),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          side: WidgetStatePropertyAll(
+            BorderSide(color: Colors.white.withValues(alpha: 0.07)),
+          ),
+          backgroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return const Color(0xFFD32F2F);
+            }
+
+            return const Color(0xFF212530);
+          }),
+          foregroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return Colors.white;
+            }
+
+            return Colors.white60;
+          }),
+          overlayColor: const WidgetStatePropertyAll(Color(0x22FFFFFF)),
+        ),
       ),
     );
   }

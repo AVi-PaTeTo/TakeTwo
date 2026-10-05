@@ -2,15 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // <-- Required for SystemNavigator.pop()
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mobile/features/auth/models/user.dart';
+
 import 'package:mobile/features/create/screens/create_screen.dart';
 import 'package:mobile/features/explore/screens/explore_screen.dart';
 import 'package:mobile/features/search/screens/search_screen.dart';
-import 'package:mobile/shared/models/movie.dart';
-import 'package:mobile/shared/models/post.dart';
+
 import 'package:mobile/shared/models/post_detail_data.dart';
-import 'package:mobile/shared/models/user_summary.dart';
-import 'package:mobile/shared/widgets/post_card.dart';
 
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/screens/login_screen.dart';

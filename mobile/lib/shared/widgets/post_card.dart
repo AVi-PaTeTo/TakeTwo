@@ -1,7 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/widget_previews.dart';
 
 import 'package:mobile/core/router/navigation_helpers.dart';
 import 'package:mobile/core/util/time_ago.dart';

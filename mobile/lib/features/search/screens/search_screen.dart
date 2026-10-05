@@ -59,36 +59,49 @@ class _SearchScreenState extends ConsumerState<SearchScreen>
       // backgroundColor: Colors.black,
 
       appBar: AppBar(
-        // backgroundColor: Colors.black,
         elevation: 0,
 
-        title: TextField(
-          controller: _controller,
-          autofocus: true,
+        toolbarHeight: 80,
 
-          onChanged: _onSearchChanged,
+        title: Padding(
+          padding: const EdgeInsets.only(top: 10, bottom: 6),
+          child: TextField(
+            controller: _controller,
+            autofocus: true,
+            onChanged: _onSearchChanged,
 
-          style: const TextStyle(color: Colors.white, fontSize: 16),
+            cursorColor: const Color(0xFFD32F2F),
 
-          decoration: InputDecoration(
-            hintText: 'Search users or posts',
-            hintStyle: const TextStyle(color: Colors.white38),
+            style: const TextStyle(color: Colors.white, fontSize: 16),
 
-            prefixIcon: const Icon(Icons.search, color: Colors.white54),
+            decoration: InputDecoration(
+              hintText: 'Search users or posts',
+              hintStyle: const TextStyle(color: Colors.white38),
 
-            suffixIcon: _controller.text.isNotEmpty
-                ? IconButton(
-                    onPressed: _clearSearch,
-                    icon: const Icon(Icons.clear, color: Colors.white54),
-                  )
-                : null,
+              prefixIcon: const Icon(Icons.search, color: Colors.white54),
 
-            filled: true,
-            fillColor: Colors.white10,
+              suffixIcon: _controller.text.isNotEmpty
+                  ? IconButton(
+                      onPressed: _clearSearch,
+                      icon: const Icon(Icons.clear, color: Colors.white54),
+                    )
+                  : null,
 
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
+              filled: true,
+              fillColor: const Color(0xFF212530),
+
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Colors.white10, width: 1.2),
+              ),
+
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Color(0xFFD32F2F),
+                  width: 1.2,
+                ),
+              ),
             ),
           ),
         ),

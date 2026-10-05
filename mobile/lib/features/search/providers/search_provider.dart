@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/providers.dart';
-import '../models/search_response.dart';
+
 import '../models/search_user.dart';
 import '../services/search_service.dart';
 

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/features/auth/controllers/profile_controller.dart';
 
-import '../../../shared/providers/user_detail_provider.dart';
 import '../../../shared/widgets/image_uploader.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
@@ -53,13 +52,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   late final TextEditingController _usernameController;
   late List<int> _selectedGenres;
+
   File? _profileImageFile;
   File? _bannerImageFile;
+
+  bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
+
     _usernameController = TextEditingController(text: widget.initialUsername);
+
     _selectedGenres = List.from(widget.initialGenres);
   }
 
@@ -71,47 +75,74 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const bool isSaving = false;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Edit Profile'),
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.close),
-          onPressed: isSaving ? null : () => Navigator.of(context).pop(),
+          onPressed: _isSaving ? null : () => Navigator.of(context).pop(),
         ),
         actions: [
           TextButton(
-            onPressed: isSaving
-                ? null // Disable button while saving to prevent double-clicks
+            onPressed: _isSaving
+                ? null
                 : () async {
-                    // 1. Trigger the update method on the Riverpod controller
-                    final success = await ref
-                        .read(profileControllerProvider.notifier)
-                        .updateProfile(
-                          username: _usernameController.text.trim(),
-                          preferredGenres: _selectedGenres,
-                          profilePicture:
-                              _profileImageFile, // null if untouched
-                          bannerPicture: _bannerImageFile, // null if untouched
+                    setState(() {
+                      _isSaving = true;
+                    });
+
+                    try {
+                      final success = await ref
+                          .read(profileControllerProvider.notifier)
+                          .updateProfile(
+                            username: _usernameController.text.trim(),
+                            preferredGenres: _selectedGenres,
+                            profilePicture: _profileImageFile,
+                            bannerPicture: _bannerImageFile,
+                          );
+
+                      if (!mounted) return;
+
+                      if (success) {
+                        widget.onProfileUpdated?.call();
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Profile updated successfully!'),
+                          ),
                         );
 
-                    // 2. If successful and screen is still mounted, exit & show feedback
-                    if (success && mounted) {
-                      widget.onProfileUpdated?.call();
+                        Navigator.of(context).pop();
+                      } else {
+                        setState(() {
+                          _isSaving = false;
+                        });
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Unable to update profile.'),
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      if (!mounted) return;
+
+                      setState(() {
+                        _isSaving = false;
+                      });
 
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Profile updated successfully!'),
+                          content: Text('Unable to update profile.'),
                         ),
                       );
-                      Navigator.of(context).pop();
                     }
                   },
-            child: isSaving
+            child: _isSaving
                 ? const SizedBox(
-                    width: 16,
-                    height: 16,
+                    width: 18,
+                    height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Text(
@@ -137,7 +168,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       aspectRatio: 16 / 8,
                       initialImageUrl: widget.initialBannerUrl,
                       onImageSelected: (file) {
-                        setState(() => _bannerImageFile = file);
+                        setState(() {
+                          _bannerImageFile = file;
+                        });
                       },
                     ),
                     Positioned(
@@ -171,7 +204,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             aspectRatio: 1 / 1,
                             initialImageUrl: widget.initialAvatarUrl,
                             onImageSelected: (file) {
-                              setState(() => _profileImageFile = file);
+                              setState(() {
+                                _profileImageFile = file;
+                              });
                             },
                           ),
                         ),
@@ -180,6 +215,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   ],
                 ),
               ),
+
               const SizedBox(height: 24),
 
               // --- USERNAME FIELD ---
@@ -191,7 +227,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   color: Colors.white70,
                 ),
               ),
+
               const SizedBox(height: 8),
+
               TextField(
                 controller: _usernameController,
                 maxLength: 25,
@@ -211,6 +249,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   counterText: '',
                 ),
               ),
+
               const SizedBox(height: 24),
 
               // --- GENRE PILLS SECTION ---
@@ -222,7 +261,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   color: Colors.white70,
                 ),
               ),
+
               const SizedBox(height: 12),
+
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -230,6 +271,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   return _buildGenreChip(id: entry.key, label: entry.value);
                 }).toList(),
               ),
+
               const SizedBox(height: 32),
             ],
           ),
@@ -240,18 +282,21 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   Widget _buildGenreChip({required int id, required String label}) {
     final isSelected = _selectedGenres.contains(id);
+
     return FilterChip(
       label: Text(label),
       selected: isSelected,
-      onSelected: (selected) {
-        setState(() {
-          if (selected) {
-            _selectedGenres.add(id);
-          } else {
-            _selectedGenres.remove(id);
-          }
-        });
-      },
+      onSelected: _isSaving
+          ? null
+          : (selected) {
+              setState(() {
+                if (selected) {
+                  _selectedGenres.add(id);
+                } else {
+                  _selectedGenres.remove(id);
+                }
+              });
+            },
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
     );
   }

@@ -33,7 +33,7 @@ class MovieSearchResult {
       posterPath: json['poster_path'],
       backdropPath: json['backdrop_path'],
       releaseDate: json['release_date'],
-      genreIds: json['genre_ids'] ?? [],
+      genreIds: List<int>.from(json['genre_ids'] ?? []),
       trailerUrl: json['trailer_url'],
     );
   }
