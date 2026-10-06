@@ -190,11 +190,40 @@ class _ExploreMoviePageState extends ConsumerState<ExploreMoviePage> {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 stops: [0.35, 1.0],
-                colors: [Colors.black26, Colors.black],
+                colors: [Colors.black38, Colors.black],
               ),
             ),
           ),
         ),
+
+        if (posts.length > 1)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 10,
+            child: IgnorePointer(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(posts.length, (index) {
+                  final isActive = index == _currentIndex;
+
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeOut,
+                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                    width: isActive ? 32 : 5,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(
+                        alpha: isActive ? 0.9 : 0.4,
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  );
+                }),
+              ),
+            ),
+          ),
 
         // Horizontal navigation between posts about this movie.
         if (_isLoading)

@@ -161,7 +161,7 @@ class _ExplorePostState extends ConsumerState<ExplorePost>
               ),
             ],
           ),
-              const SizedBox(height: 8),
+          const SizedBox(height: 8),
 
           // ------------------------------------------------------
           // TRAILER + LIKE + COMMENT

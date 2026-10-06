@@ -86,14 +86,26 @@ class UserDetailSerializer(serializers.ModelSerializer):
 
     def get_posts(self, obj):
         request = self.context.get("request")
-        posts = obj.posts.select_related("user", "movie").all()
+
+        posts = (
+            obj.posts
+            .select_related("user", "movie")
+            .order_by("-created_at")
+        )
 
         paginator = UserPostPagination()
-        paginated_posts = paginator.paginate_queryset(posts, request, view=self)
+        paginated_posts = paginator.paginate_queryset(
+            posts,
+            request,
+            view=self,
+        )
 
         serializer = PostSerializer(
             paginated_posts,
             many=True,
             context=self.context,
         )
-        return paginator.get_paginated_response(serializer.data).data
+
+        return paginator.get_paginated_response(
+            serializer.data
+        ).data
