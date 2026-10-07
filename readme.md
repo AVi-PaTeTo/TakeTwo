@@ -1,3 +1,12 @@
+> ⚠️ **Demo Note:** This project is hosted on free-tier infrastructure. If the live site or backend takes 30 seconds to respond on your first click, it's just waking up from an idle sleep state! 
+> 
+> **Want to test it instantly without signing up?** Use these pre-configured test credentials:
+> ```text
+> Username: the_almighty
+> Password: 123password
+> ```
+
+
 # Take Two 🎬
 
 A social app for discovering, discussing, and sharing opinions on movies and TV shows.
