@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile/core/router/navigation_helpers.dart';
 
+import 'package:mobile/core/util/time_ago.dart';
 import 'package:mobile/shared/models/post_detail_data.dart';
 import 'package:mobile/features/home/widgets/comments_bottom_sheet.dart';
 import 'package:mobile/shared/providers/feed_providers.dart';
@@ -316,11 +317,22 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                     ),
                   ],
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 10),
 
                   // -------------------------
                   // POST TITLE
                   // -------------------------
+                  if (widget.post.createdAt != null &&
+                      widget.post.createdAt!.isNotEmpty)
+                    Text(
+                      'Posted: ${TimeAgo.format(widget.post.createdAt!)}',
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  const SizedBox(height: 10),
                   Text(
                     widget.post.title,
                     style: const TextStyle(
@@ -345,7 +357,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                   // POST ACTIONS
                   // -------------------------
                   Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       _buildActionPill(
                         icon: _isLiked ? Icons.favorite : Icons.favorite_border,

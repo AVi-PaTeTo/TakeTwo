@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:mobile/core/util/time_ago.dart';
 import 'package:mobile/shared/providers/post_cache_provider.dart';
 
 import '../../../shared/models/post.dart';
@@ -437,6 +437,16 @@ class _SearchScreenState extends ConsumerState<SearchScreen>
                           fontSize: 12,
                         ),
                       ),
+                      const Spacer(),
+                      if (post.createdAt != null && post.createdAt!.isNotEmpty)
+                        Text(
+                          TimeAgo.format(post.createdAt!),
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                     ],
                   ),
                 ],

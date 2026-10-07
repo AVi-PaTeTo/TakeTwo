@@ -6,6 +6,7 @@ import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:mobile/shared/providers/feed_providers.dart';
 import 'package:mobile/features/home/widgets/comments_bottom_sheet.dart';
 import 'package:mobile/core/router/navigation_helpers.dart';
+import 'package:mobile/core/util/time_ago.dart';
 
 import '../utils/genre_names.dart';
 
@@ -87,7 +88,7 @@ class _ExplorePostState extends ConsumerState<ExplorePost>
             onTap: _toggleExpanded,
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                maxHeight: MediaQuery.sizeOf(context).height * 0.75,
+                maxHeight: MediaQuery.sizeOf(context).height * 0.80,
               ),
               child: _buildInfo(post),
             ),
@@ -141,23 +142,40 @@ class _ExplorePostState extends ConsumerState<ExplorePost>
                   fontSize: 18,
                   fontWeight: FontWeight.w500,
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+                maxLines: _expandController.isCompleted ? null : 2,
+                overflow: _expandController.isCompleted
+                    ? TextOverflow.visible
+                    : TextOverflow.ellipsis,
               ),
 
               const SizedBox(height: 8),
 
-              GestureDetector(
-                onTap: () {
-                  openUserProfile(context, ref, post.user.id);
-                },
-                child: Text(
-                  '@${post.user.username}',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.8),
-                    fontSize: 14,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      openUserProfile(context, ref, post.user.id);
+                    },
+                    child: Text(
+                      '@${post.user.username}',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontSize: 14,
+                      ),
+                    ),
                   ),
-                ),
+                  Spacer(),
+                  if (post.createdAt != null && post.createdAt!.isNotEmpty)
+                    Text(
+                      TimeAgo.format(post.createdAt!),
+                      style: const TextStyle(
+                        color: Colors.white60,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                ],
               ),
             ],
           ),

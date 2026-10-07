@@ -6,6 +6,7 @@ class PostDetailData {
 
   final String title;
   final String content;
+  final String? createdAt;
 
   final String movieTitle;
   final String? movieOverview;
@@ -24,6 +25,7 @@ class PostDetailData {
     required this.userId,
     required this.username,
     required this.profilePictureUrl,
+    this.createdAt,
     required this.title,
     required this.content,
     required this.movieTitle,

@@ -77,6 +77,7 @@ class Post {
       userId: user.id,
       username: user.username,
       profilePictureUrl: user.profilePictureUrl,
+      createdAt: createdAt,
       title: title,
       content: content,
       movieTitle: movie.title,
