@@ -7,7 +7,13 @@ A social app for discovering, discussing, and sharing opinions on movies and TV 
 🎥 **Walkthrough:**
 [Demo Video](https://youtu.be/GwIIwNnSdrs?si=sMvceW3j0DGfRGTI)
 
-![Profile](./Screentshots/take3.jpeg) ![Explore](./Screentshots/take2.jpeg) ![Create](./Screentshots/take1.jpeg) ![Search](./Screentshots/take.jpeg) ![Home](./Screentshots/take4.jpeg)
+<p align="center">
+  <img src="./Screentshots/take4.jpeg" alt="Home" width="180"/>
+  <img src="./Screentshots/take2.jpeg" alt="Explore" width="180"/>
+  <img src="./Screentshots/take1.jpeg" alt="Create" width="180"/>
+  <img src="./Screentshots/take.jpeg" alt="Search" width="180"/>
+  <img src="./Screentshots/take3.jpeg" alt="Profile" width="180"/>
+</p>
 
 ## About
 
